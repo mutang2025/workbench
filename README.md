@@ -26,7 +26,8 @@
 workbench/
 ├── server.js              # Node.js 后端服务（零依赖，仅用内置模块）
 ├── workbench.html         # 前端单页应用（HTML + CSS + JS 合一）
-├── data.json              # 数据持久化文件（服务端存储，运行时生成）
+├── data/                  # 数据目录（容器内运行时生成，通过 named volume 持久化）
+│   └── data.json          # 数据持久化文件
 ├── Dockerfile             # Docker 镜像构建文件
 ├── docker-compose.yml     # Docker Compose 一键部署配置
 └── .dockerignore          # Docker 构建忽略列表
@@ -36,7 +37,7 @@ workbench/
 | --- | --- |
 | `server.js` | 原生 `http` 模块搭建的服务，提供静态文件托管与数据读写 REST API |
 | `workbench.html` | 包含完整 UI、样式与交互逻辑的前端单页应用 |
-| `data.json` | 服务端数据存储文件，初始为 `{}`，由前端通过 API 写入 |
+| `data/data.json` | 服务端数据存储文件，通过 Docker named volume 持久化 |
 
 ---
 
@@ -44,6 +45,7 @@ workbench/
 
 | 模块 | 功能 |
 | --- | --- |
+| 🔒 密码保护 | 首次访问需输入密码，SHA-256 加密缓存到浏览器 localStorage，后续免验证 |
 | 🗂️ 站点导航 | 按分组展示站点卡片，支持拖拽排序、跨组拖动、增删改、折叠展开 |
 | 🔍 站点搜索 | 按站点名称或网址实时过滤 |
 | ✅ 待办事项 | 新增、勾选完成、删除、一键清空已完成 |
@@ -97,7 +99,7 @@ node server.js
 
 ### 方式一：Docker Compose（推荐）
 
-一键构建并启动，数据自动持久化到当前目录的 `data.json`：
+一键构建并启动，数据通过 Docker named volume 持久化，重建容器不丢失：
 
 ```bash
 # 构建镜像并后台启动
@@ -110,9 +112,9 @@ docker compose logs -f
 docker compose down
 ```
 
-启动后访问 `http://localhost:3000`。
+启动后访问 `http://localhost:3110`。
 
-**自定义端口**：修改 `docker-compose.yml` 中 `ports` 的左侧端口即可，例如改为 `8080:3000` 后访问 `http://localhost:8080`。
+**自定义端口**：修改 `docker-compose.yml` 中 `ports` 的左侧端口即可，例如改为 `8080:3110` 后访问 `http://localhost:8080`。
 
 ### 方式二：原生 Docker 命令
 
@@ -120,11 +122,14 @@ docker compose down
 # 1. 构建镜像
 docker build -t personal-workbench:latest .
 
-# 2. 运行容器（挂载数据文件实现持久化）
+# 2. 创建 named volume
+docker volume create workbench_data
+
+# 3. 运行容器（使用 named volume 持久化数据）
 docker run -d \
   --name workbench \
-  -p 3000:3000 \
-  -v $(pwd)/data.json:/app/data.json \
+  -p 3110:3110 \
+  -v workbench_data:/app/data \
   --restart unless-stopped \
   personal-workbench:latest
 
@@ -143,16 +148,24 @@ docker rm workbench
 | 基础镜像 | `node:20-alpine`（轻量，约 50MB） |
 | 非 root 运行 | 使用 `appuser` 用户运行，提升安全性 |
 | 健康检查 | 内置 `HEALTHCHECK`，每 30 秒检测 `/api/data` |
-| 数据持久化 | 通过 Volume 挂载 `data.json`，容器重建数据不丢失 |
+| 数据持久化 | 通过 Docker named volume 持久化，重建容器数据不丢失 |
 | 自动重启 | `restart: unless-stopped`，异常退出自动拉起 |
 | 零依赖 | 无需 `npm install`，镜像极简 |
+| 密码保护 | 首次访问需输入密码，SHA-256 加密缓存到浏览器 localStorage |
 
 ### 数据持久化说明
 
-⚠️ **必须挂载 `data.json`**，否则容器删除后数据会丢失：
+数据通过 Docker named volume `workbench_workbench_data`（Compose 自动创建）持久化到 `/app/data/data.json`，容器重建、删除后重新创建，数据依然保留。
 
-- **Compose 方式**：已在 `docker-compose.yml` 中配置 `./data.json:/app/data.json`，首次运行前需确保 `data.json` 文件存在（空文件即可，内容为 `{}`）
-- **原生方式**：通过 `-v` 参数挂载
+如需手动备份数据：
+
+```bash
+# 导出数据
+docker run --rm -v workbench_workbench_data:/data alpine cat /data/data.json > backup.json
+
+# 恢复数据
+docker run --rm -i -v workbench_workbench_data:/data alpine sh -c 'cat > /data/data.json' < backup.json
+```
 
 ### 推送到镜像仓库（可选）
 
@@ -165,7 +178,7 @@ docker push your-registry.com/workbench:latest
 
 # 在服务器上拉取并运行
 docker pull your-registry.com/workbench:latest
-docker run -d --name workbench -p 80:3110 -v /data/workbench.json:/app/data.json your-registry.com/workbench:latest
+docker run -d --name workbench -p 80:3110 -v workbench_data:/app/data your-registry.com/workbench:latest
 ```
 
 ---
@@ -179,7 +192,7 @@ docker run -d --name workbench -p 80:3110 -v /data/workbench.json:/app/data.json
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
 | `PORT` | `3110`（可由环境变量 `PORT` 覆盖） | 服务监听端口 |
-| `DATA_FILE` | `path.join(__dirname, 'data.json')` | 数据存储文件路径 |
+| `DATA_FILE` | `path.join(__dirname, 'data', 'data.json')` | 数据存储文件路径（容器内） |
 
 ### MIME 类型支持
 
@@ -382,7 +395,7 @@ function mergeData(raw) {
 ## 注意事项
 
 - **CORS 完全开放**：`Access-Control-Allow-Origin: *`，适合本地或内网使用，不建议直接暴露到公网。
-- **无身份认证**：数据接口无鉴权，任何人可读写数据，仅适合个人本地使用。
+- **密码保护**：默认密码 `lgc123`，通过 SHA-256 加密缓存到浏览器 localStorage，首次访问需输入密码。如需修改密码，编辑 `workbench.html` 中的 `PASSWORD` 常量。
 - **localStorage 同步**：每次读取服务端数据会同步覆盖本地缓存，多设备数据不会自动合并，以最后一次写入为准。
 - **图片背景 Base64**：本地上传的背景图片以 Base64 编码存入数据，大图会显著增大 `data.json` 体积。
 
