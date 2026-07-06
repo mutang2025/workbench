@@ -7,6 +7,75 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
+    /* ===== Password Lock Overlay ===== */
+    .lock-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--background);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .lock-overlay.hidden {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+    .lock-box {
+      text-align: center;
+      padding: 3rem 2.5rem;
+      border-radius: var(--radius);
+      max-width: 380px;
+      width: 90%;
+    }
+    .lock-icon {
+      width: 56px; height: 56px;
+      margin: 0 auto 1.5rem;
+      background: var(--background-secondary);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lock-icon svg { width: 28px; height: 28px; stroke: var(--foreground-secondary); }
+    .lock-title {
+      font-size: 1.25rem; font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 0.5rem;
+    }
+    .lock-desc {
+      font-size: 0.875rem; color: var(--foreground-secondary);
+      margin-bottom: 1.5rem;
+    }
+    .lock-input {
+      width: 100%; padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      background: var(--card);
+      color: var(--foreground);
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .lock-input:focus {
+      border-color: var(--border-focus);
+    }
+    .lock-input::placeholder { color: var(--foreground-tertiary); }
+    .lock-error {
+      color: var(--error);
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+      min-height: 1.25rem;
+    }
+    .lock-btn {
+      margin-top: 1rem;
+      width: 100%; padding: 0.75rem;
+      border: none; border-radius: var(--radius-sm);
+      background: var(--primary); color: var(--primary-foreground);
+      font-size: 1rem; font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .lock-btn:hover { opacity: 0.85; }
+    .lock-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* ===== Apple Design System Tokens ===== */
     :root {
       --brand-50: #e8f2ff;
@@ -1384,6 +1453,23 @@
 </head>
 <body>
 
+  <!-- ===== Password Lock Overlay ===== -->
+  <div id="lockOverlay" class="lock-overlay">
+    <div class="lock-box">
+      <div class="lock-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div class="lock-title">已锁定</div>
+      <div class="lock-desc">请输入密码解锁工作台</div>
+      <input id="lockInput" class="lock-input" type="password" placeholder="输入密码" autocomplete="off">
+      <div id="lockError" class="lock-error"></div>
+      <button id="lockBtn" class="lock-btn">解锁</button>
+    </div>
+  </div>
+
   <!-- Background Layer -->
   <div id="bgWrap" class="bg-wrap"></div>
 
@@ -1594,6 +1680,65 @@
   </div>
 
 <script>
+// ===================== Password Lock =====================
+const PASSWORD = 'lgc123';
+const LOCK_CACHE_KEY = 'workbench_lock';
+
+async function sha256(text) {
+  const enc = new TextEncoder();
+  const data = enc.encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkLock() {
+  const cached = localStorage.getItem(LOCK_CACHE_KEY);
+  if (cached) {
+    const expected = await sha256(PASSWORD);
+    if (cached === expected) return true; // cached and valid
+  }
+  return false;
+}
+
+(async () => {
+  const overlay = document.getElementById('lockOverlay');
+  const input = document.getElementById('lockInput');
+  const btn = document.getElementById('lockBtn');
+  const errEl = document.getElementById('lockError');
+
+  const unlocked = await checkLock();
+  if (unlocked) {
+    overlay.classList.add('hidden');
+    return; // let the existing init run
+  }
+
+  // Show lock — prevent existing init from rendering content
+  overlay.classList.remove('hidden');
+
+  async function attempt() {
+    const pw = input.value.trim();
+    if (!pw) { errEl.textContent = '请输入密码'; return; }
+    const hash = await sha256(pw);
+    const expected = await sha256(PASSWORD);
+    if (hash === expected) {
+      localStorage.setItem(LOCK_CACHE_KEY, hash);
+      overlay.classList.add('hidden');
+      input.value = '';
+      // Now trigger the original init
+      appData = await loadData();
+      renderAll();
+    } else {
+      errEl.textContent = '密码错误，请重试';
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  btn.onclick = attempt;
+  input.onkeydown = e => { if (e.key === 'Enter') attempt(); };
+  input.focus();
+})();
+
 // ===================== Data Persistence (Server + localStorage) =====================
 const LS_KEY = 'workbench_data';
 const DEFAULTS = {
@@ -2233,6 +2378,8 @@ function renderAll() {
 
 (async () => {
   appData = await loadData();
+  // If lock overlay is still visible, don't render (lock code handles it)
+  if (!document.getElementById('lockOverlay').classList.contains('hidden')) return;
   renderAll();
 })();
 </script>
