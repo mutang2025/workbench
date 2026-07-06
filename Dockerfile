@@ -29,18 +29,18 @@ RUN mkdir -p /app/data && \
 USER appuser
 
 # 对外暴露端口
-EXPOSE 3000
+EXPOSE 3110
 
 # 声明数据卷（data.json 持久化）
 VOLUME ["/app/data.json"]
 
 # 环境变量默认值
-ENV PORT=3000
+ENV PORT=3110
 ENV NODE_ENV=production
 
 # 健康检查：每 30 秒检测一次服务是否存活
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:3000/api/data || exit 1
+  CMD wget -qO- http://localhost:3110/api/data || exit 1
 
 # 启动命令
 CMD ["node", "server.js"]

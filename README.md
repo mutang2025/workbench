@@ -82,7 +82,7 @@ node server.js
 启动后控制台输出：
 
 ```
-工作台服务已启动: http://localhost:3000
+工作台服务已启动: http://localhost:3110
 ```
 
 ### 访问应用
@@ -165,7 +165,7 @@ docker push your-registry.com/workbench:latest
 
 # 在服务器上拉取并运行
 docker pull your-registry.com/workbench:latest
-docker run -d --name workbench -p 80:3000 -v /data/workbench.json:/app/data.json your-registry.com/workbench:latest
+docker run -d --name workbench -p 80:3110 -v /data/workbench.json:/app/data.json your-registry.com/workbench:latest
 ```
 
 ---
@@ -178,7 +178,7 @@ docker run -d --name workbench -p 80:3000 -v /data/workbench.json:/app/data.json
 
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
-| `PORT` | `3000`（可由环境变量 `PORT` 覆盖） | 服务监听端口 |
+| `PORT` | `3110`（可由环境变量 `PORT` 覆盖） | 服务监听端口 |
 | `DATA_FILE` | `path.join(__dirname, 'data.json')` | 数据存储文件路径 |
 
 ### MIME 类型支持
