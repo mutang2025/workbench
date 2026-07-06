@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3110;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
 const MIME = {
@@ -79,8 +79,8 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Static files — default to 工作台.html
-  let filePath = req.url === '/' ? '/工作台.html' : req.url;
+  // Static files — default to workbench.html
+  let filePath = req.url === '/' ? '/workbench.html' : req.url;
   filePath = path.join(__dirname, filePath);
 
   // Security: prevent escaping the directory
