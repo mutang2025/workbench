@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人工作台 - Apple 风格</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    /* ===== Apple Design System Tokens ===== */
+    :root {
+      --brand-50: #e8f2ff;
+      --brand-100: #cfe5ff;
+      --brand-200: #9fcbff;
+      --brand-300: #66abff;
+      --brand-400: #2e8dff;
+      --brand-500: #007aff;
+      --brand-600: #0064d6;
+
+      --background: #ffffff;
+      --background-secondary: #f2f2f7;
+      --background-tertiary: #e5e5ea;
+      --foreground: #1d1d1f;
+      --foreground-secondary: #6e6e73;
+      --foreground-tertiary: #aeaeb2;
+      --card: #ffffff;
+      --card-foreground: #1d1d1f;
+      --border: #e5e5ea;
+      --border-focus: #007aff;
+      --primary: #007aff;
+      --primary-foreground: #ffffff;
+      --secondary: #f2f2f7;
+      --secondary-foreground: #1d1d1f;
+      --muted: #f2f2f7;
+      --muted-foreground: #8e8e93;
+      --success: #34c759;
+      --error: #ff3b30;
+      --icon-color: #6e6e73;
+
+      --font-sans: 'DM Sans', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+      --radius: 1.2rem;
+      --radius-sm: 0.8rem;
+      --radius-xs: 0.5rem;
+      --radius-full: 9999px;
+
+      --shadow-2xs: 0 1px 2px -1px rgba(0,0,0,0.04);
+      --shadow-xs: 0 1px 2px 0 rgba(0,0,0,0.04);
+      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05), 0 1px 3px -1px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 8px -2px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 8px 24px -8px rgba(0,0,0,0.08), 0 4px 8px -4px rgba(0,0,0,0.05);
+      --shadow-xl: 0 16px 40px -10px rgba(0,0,0,0.10), 0 8px 16px -8px rgba(0,0,0,0.06);
+
+      --spacing: 0.24rem;
+    }
+
+    .dark {
+      --background: #000000;
+      --background-secondary: #1c1c1e;
+      --background-tertiary: #3a3a3c;
+      --foreground: #f5f5f7;
+      --foreground-secondary: #8e8e93;
+      --foreground-tertiary: #636366;
+      --card: #1c1c1e;
+      --card-foreground: #f5f5f7;
+      --border: #3a3a3c;
+      --border-focus: #2e8dff;
+      --primary: #2e8dff;
+      --primary-foreground: #000000;
+      --secondary: #1c1c1e;
+      --secondary-foreground: #f5f5f7;
+      --muted: #1c1c1e;
+      --muted-foreground: #8e8e93;
+      --icon-color: #aeaeb2;
+      --shadow-2xs: 0 1px 2px -1px rgba(0,0,0,0.30);
+      --shadow-xs: 0 1px 2px 0 rgba(0,0,0,0.30);
+      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.36), 0 1px 3px -1px rgba(0,0,0,0.36);
+      --shadow-md: 0 4px 8px -2px rgba(0,0,0,0.44), 0 2px 4px -2px rgba(0,0,0,0.36);
+      --shadow-lg: 0 8px 24px -8px rgba(0,0,0,0.50), 0 4px 8px -4px rgba(0,0,0,0.40);
+      --shadow-xl: 0 16px 40px -10px rgba(0,0,0,0.55), 0 8px 16px -8px rgba(0,0,0,0.44);
+    }
+
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--foreground);
+      background: var(--background);
+      transition: background 0.3s ease, color 0.3s ease;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      line-height: 1.4;
+    }
+
+    /* ===== Background Layer ===== */
+    #bgWrap {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-size: cover;
+      background-position: center;
+      transition: background 0.3s ease;
+    }
+
+    /* ===== Layout ===== */
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: calc(var(--spacing) * 10) calc(var(--spacing) * 8);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== Header ===== */
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 4);
+      margin-bottom: calc(var(--spacing) * 10);
+      padding: calc(var(--spacing) * 4) calc(var(--spacing) * 6);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .app-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--foreground);
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 2);
+      white-space: nowrap;
+    }
+
+    .app-title svg {
+      width: 20px;
+      height: 20px;
+      color: var(--primary);
+    }
+
+    /* ===== Search — centered ===== */
+    .search-wrap {
+      position: relative;
+      flex: 0 1 320px;
+      margin: 0 auto;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      height: 40px;
+      padding: 0 calc(var(--spacing) * 4) 0 calc(var(--spacing) * 6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 1px var(--border-focus);
+    }
+
+    .search-wrap input::placeholder {
+      color: var(--foreground-tertiary);
+    }
+
+    .search-wrap .search-icon {
+      position: absolute;
+      left: calc(var(--spacing) * 2);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--icon-color);
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
+    /* ===== Header Actions ===== */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 2);
+      margin-left: auto;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--secondary);
+      color: var(--icon-color);
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--background-tertiary);
+      color: var(--foreground);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 1.5);
+      height: 36px;
+      padding: 0 calc(var(--spacing) * 4);
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.18s ease, opacity 0.18s ease;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(0.92);
+    }
+
+    .btn-primary svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ===== Content Layout ===== */
+    .content-layout {
+      display: flex;
+      gap: calc(var(--spacing) * 8);
+    }
+
+    .main-area {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ===== Group Cards ===== */
+    .group-section {
+      margin-bottom: calc(var(--spacing) * 6);
+      padding: calc(var(--spacing) * 5) calc(var(--spacing) * 6);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .group-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: var(--spacing);
+      width: calc(100% - var(--spacing) * 2);
+      height: 1px;
+      background: var(--border);
+      opacity: 0;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: calc(var(--spacing) * 4);
+    }
+
+    .group-title {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--foreground);
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 2);
+    }
+
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 calc(var(--spacing) * 1.5);
+      border-radius: 999px;
+      background: var(--secondary);
+      color: var(--foreground-secondary);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .group-actions {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 2);
+    }
+
+    .group-toggle {
+      display: none;
+      align-items: center;
+      gap: calc(var(--spacing) * 1);
+      border: none;
+      background: none;
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+      padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+      border-radius: var(--radius-xs);
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .group-toggle.visible {
+      display: inline-flex;
+    }
+
+    .group-toggle:hover {
+      background: var(--brand-50);
+    }
+
+    .dark .group-toggle:hover {
+      background: rgba(46, 141, 255, 0.12);
+    }
+
+    .group-toggle svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s ease;
+    }
+
+    .group-toggle.expanded svg {
+      transform: rotate(180deg);
+    }
+
+    .site-grid.collapsed .site-card:nth-child(n+26) {
+      display: none;
+    }
+
+    .text-action {
+      display: inline-flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 1);
+      border: none;
+      background: none;
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+      border-radius: var(--radius-xs);
+      transition: background 0.15s ease;
+    }
+
+    .text-action.add-site {
+      color: var(--primary);
+    }
+
+    .text-action.add-site:hover {
+      background: var(--brand-50);
+    }
+
+    .text-action.del-group {
+      color: var(--error);
+    }
+
+    .text-action.del-group:hover {
+      background: #ffecea;
+    }
+
+    .dark .text-action.add-site:hover {
+      background: rgba(46, 141, 255, 0.12);
+    }
+
+    .dark .text-action.del-group:hover {
+      background: rgba(255, 59, 48, 0.12);
+    }
+
+    /* ===== Site Grid ===== */
+    .site-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: calc(var(--spacing) * 2.5);
+    }
+
+    @media (max-width: 1100px) {
+      .site-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 800px) {
+      .site-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .site-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .site-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: calc(var(--spacing) * 1.5);
+      padding: calc(var(--spacing) * 3) calc(var(--spacing) * 1.5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--background);
+      text-decoration: none;
+      color: var(--foreground);
+      min-width: 0;
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      cursor: pointer;
+    }
+
+    .site-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary);
+    }
+
+    .site-card img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .site-card .site-name {
+      width: 100%;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--foreground);
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .site-card .site-del {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--error);
+      color: white;
+      cursor: pointer;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      padding: 0;
+      line-height: 1;
+      font-size: 14px;
+      font-family: var(--font-sans);
+    }
+
+    .site-card:hover .site-del {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .site-card .site-del:hover {
+      background: #d6302a;
+      transform: scale(1.1);
+    }
+
+    .site-card .site-edit {
+      position: absolute;
+      top: 4px;
+      right: 28px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .site-card:hover .site-edit {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .site-card .site-edit:hover {
+      background: var(--brand-600);
+      transform: scale(1.1);
+    }
+
+    .site-card .site-edit svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* ===== FAB — New Group ===== */
+    .fab-group {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      box-shadow: var(--shadow-lg);
+      cursor: pointer;
+      z-index: 40;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .fab-group:hover {
+      transform: scale(1.06);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .fab-group svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .fab-group .fab-tooltip {
+      position: absolute;
+      right: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
+      border-radius: var(--radius-full);
+      background: var(--foreground);
+      color: var(--background);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+
+    .fab-group:hover .fab-tooltip {
+      opacity: 1;
+    }
+
+    .fab-group .fab-tooltip::after {
+      content: '';
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-left-color: var(--foreground);
+    }
+
+    @media (max-width: 600px) {
+      .fab-group {
+        bottom: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+      }
+      .fab-group .fab-tooltip {
+        display: none;
+      }
+    }
+
+    /* ===== Side Panel ===== */
+    .side-panel {
+      width: 280px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--spacing) * 5);
+    }
+
+    .panel-card {
+      padding: calc(var(--spacing) * 5);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ===== Clock ===== */
+    .clock-section {
+      text-align: center;
+    }
+
+    .time-text {
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: var(--foreground);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: calc(var(--spacing) * 1);
+    }
+
+    .date-text {
+      font-size: 0.875rem;
+      color: var(--foreground-secondary);
+      font-weight: 400;
+    }
+      color: var(--foreground-tertiary);
+      font-weight: 400;
+      display: block;
+      margin-top: 1px;
+    }
+
+    /* ===== Todo ===== */
+    .todo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: calc(var(--spacing) * 3);
+    }
+
+    .todo-header h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .todo-header h3 svg {
+      width: 16px;
+      height: 16px;
+      margin-right: calc(var(--spacing) * 1);
+      vertical-align: text-bottom;
+      color: var(--primary);
+    }
+
+    .clear-done {
+      border: none;
+      background: none;
+      font-size: 0.75rem;
+      color: var(--error);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      opacity: 0.7;
+      transition: opacity 0.15s ease;
+    }
+
+    .clear-done:hover {
+      opacity: 1;
+    }
+
+    .todo-input-wrap {
+      display: flex;
+      gap: calc(var(--spacing) * 2);
+      margin-bottom: calc(var(--spacing) * 3);
+    }
+
+    .todo-input-wrap input {
+      flex: 1;
+      height: 34px;
+      padding: 0 calc(var(--spacing) * 3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      outline: none;
+      transition: border-color 0.18s ease;
+    }
+
+    .todo-input-wrap input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .todo-input-wrap input::placeholder {
+      color: var(--foreground-tertiary);
+    }
+
+    .todo-input-wrap button {
+      height: 34px;
+      padding: 0 calc(var(--spacing) * 3.5);
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.18s ease;
+    }
+
+    .todo-input-wrap button:hover {
+      filter: brightness(0.92);
+    }
+
+    .todo-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .todo-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .todo-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .todo-list::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 2);
+      padding: calc(var(--spacing) * 1.5) 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .todo-item:last-child {
+      border-bottom: none;
+    }
+
+    .todo-check {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--foreground-tertiary);
+      border-radius: 50%;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .todo-check:checked {
+      border-color: var(--success);
+      background: var(--success);
+      position: relative;
+    }
+
+    .todo-check:checked::after {
+      content: '';
+      width: 6px;
+      height: 3px;
+      border-left: 1.5px solid white;
+      border-bottom: 1.5px solid white;
+      transform: rotate(-45deg) translateY(-1px);
+      position: absolute;
+      top: 5px;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 0.8125rem;
+      color: var(--foreground);
+      transition: color 0.18s ease, text-decoration 0.18s ease;
+    }
+
+    .todo-text.done {
+      text-decoration: line-through;
+      color: var(--foreground-tertiary);
+    }
+
+    .todo-del {
+      border: none;
+      background: none;
+      color: var(--foreground-tertiary);
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .todo-del:hover {
+      background: var(--background-tertiary);
+      color: var(--error);
+    }
+
+    /* ===== Data — collapsed under Todo ===== */
+    .data-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: calc(var(--spacing) * 2) 0 0;
+      margin-top: calc(var(--spacing) * 2);
+      border: none;
+      border-top: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+      font-family: var(--font-sans);
+    }
+
+    .data-toggle span {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--foreground-tertiary);
+      transition: color 0.15s ease;
+    }
+
+    .data-toggle svg {
+      width: 14px;
+      height: 14px;
+      color: var(--foreground-tertiary);
+      transition: transform 0.2s ease, color 0.15s ease;
+    }
+
+    .data-toggle:hover span,
+    .data-toggle:hover svg {
+      color: var(--foreground-secondary);
+    }
+
+    .data-toggle.open svg {
+      transform: rotate(180deg);
+    }
+
+    .data-body {
+      display: none;
+      flex-direction: column;
+      gap: calc(var(--spacing) * 2);
+      padding-top: calc(var(--spacing) * 3);
+    }
+
+    .data-body.open {
+      display: flex;
+    }
+
+    .data-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: calc(var(--spacing) * 1.5);
+      height: 34px;
+      padding: 0 calc(var(--spacing) * 3.5);
+      border: none;
+      border-radius: var(--radius-full);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: filter 0.18s ease, opacity 0.18s ease;
+    }
+
+    .data-btn:hover {
+      filter: brightness(0.92);
+    }
+
+    .data-btn.export { background: var(--success); color: white; }
+    .data-btn.reset { background: var(--error); color: white; }
+
+    .import-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: calc(var(--spacing) * 1.5);
+      height: 34px;
+      padding: 0 calc(var(--spacing) * 3.5);
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: filter 0.18s ease;
+    }
+
+    .import-label:hover {
+      filter: brightness(0.92);
+    }
+
+    .import-label input[type="file"] {
+      display: none;
+    }
+
+    /* ===== Modals ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: calc(var(--spacing) * 4);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 440px;
+      padding: calc(var(--spacing) * 7);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .modal-content h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: calc(var(--spacing) * 5);
+      letter-spacing: -0.01em;
+    }
+
+    .form-group {
+      margin-bottom: calc(var(--spacing) * 3.5);
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--foreground-secondary);
+      margin-bottom: calc(var(--spacing) * 1);
+    }
+
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      height: 40px;
+      padding: 0 calc(var(--spacing) * 3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.18s ease;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .form-group input::placeholder {
+      color: var(--foreground-tertiary);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: calc(var(--spacing) * 3);
+      margin-top: calc(var(--spacing) * 6);
+    }
+
+    .btn-ghost {
+      height: 38px;
+      padding: 0 calc(var(--spacing) * 4);
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s ease;
+    }
+
+    .btn-ghost:hover {
+      background: var(--background-tertiary);
+    }
+
+    /* ===== BG Modal Specific ===== */
+    .bg-options {
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--spacing) * 3.5);
+    }
+
+    .bg-options label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--foreground-secondary);
+      margin-bottom: calc(var(--spacing) * 1.5);
+    }
+
+    .color-picker {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      cursor: pointer;
+      background: none;
+    }
+
+    .gradient-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: calc(var(--spacing) * 2);
+    }
+
+    .grad-btn {
+      padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .grad-btn:hover {
+      border-color: var(--primary);
+      background: var(--brand-50);
+    }
+
+    .dark .grad-btn:hover {
+      background: rgba(46, 141, 255, 0.12);
+    }
+
+    .bg-url-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 calc(var(--spacing) * 3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.18s ease;
+    }
+
+    .bg-url-input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .upload-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--primary);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .upload-label:hover {
+      border-color: var(--primary);
+      background: var(--brand-50);
+    }
+
+    .dark .upload-label:hover {
+      background: rgba(46, 141, 255, 0.08);
+    }
+
+    .upload-label input[type="file"] {
+      display: none;
+    }
+
+    .reset-bg-btn {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--secondary);
+      color: var(--foreground-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.18s ease, color 0.18s ease;
+    }
+
+    .reset-bg-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+      .app-container {
+        padding: calc(var(--spacing) * 6) calc(var(--spacing) * 4);
+      }
+      .content-layout {
+        flex-direction: column;
+      }
+      .side-panel {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .clock-section {
+        grid-column: 1 / -1;
+      }
+      #dataBody.open {
+        display: flex;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .app-container {
+        padding: calc(var(--spacing) * 4) calc(var(--spacing) * 3);
+      }
+      .app-header {
+        flex-wrap: wrap;
+        gap: calc(var(--spacing) * 3);
+      }
+      .search-wrap {
+        order: 3;
+        flex: 1 1 100%;
+        margin: 0;
+      }
+      .header-actions {
+        margin-left: auto;
+      }
+      .side-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ===== Bookmark Modal ===== */
+    .bookmark-list {
+      max-height: 320px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--spacing) * 2);
+    }
+
+    .bookmark-list::-webkit-scrollbar { width: 4px; }
+    .bookmark-list::-webkit-scrollbar-track { background: transparent; }
+    .bookmark-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .bookmark-item {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing) * 2);
+      padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--background);
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .bookmark-item:hover {
+      border-color: var(--primary);
+      background: var(--brand-50);
+    }
+
+    .dark .bookmark-item:hover {
+      background: rgba(46, 141, 255, 0.08);
+    }
+
+    .bookmark-item input[type="checkbox"] {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--foreground-tertiary);
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .bookmark-item input[type="checkbox"]:checked {
+      border-color: var(--primary);
+      background: var(--primary);
+      position: relative;
+    }
+
+    .bookmark-item input[type="checkbox"]:checked::after {
+      content: '';
+      width: 5px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg) translate(-1px, -1px);
+      position: absolute;
+    }
+
+    .bookmark-item img {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+
+    .bookmark-item .bm-name {
+      flex: 1;
+      font-size: 0.8125rem;
+      color: var(--foreground);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bookmark-item .bm-url {
+      font-size: 0.6875rem;
+      color: var(--foreground-tertiary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 160px;
+    }
+
+    .bookmark-item .bm-group-select {
+      height: 30px;
+      padding: 0 calc(var(--spacing) * 2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Picker bookmark list inside site modal */
+    .picker-bookmark-list .bookmark-item {
+      display: grid;
+      grid-template-columns: 20px 24px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: none;
+      border-radius: var(--radius-xs);
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .picker-bookmark-list .bookmark-item:hover {
+      background: var(--brand-50);
+    }
+    .dark .picker-bookmark-list .bookmark-item:hover {
+      background: rgba(46, 141, 255, 0.08);
+    }
+    .picker-bookmark-list .bookmark-item input[type="radio"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--foreground-tertiary);
+      border-radius: 50%;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s ease, background 0.15s ease;
+      margin: 0;
+      position: relative;
+    }
+    .picker-bookmark-list .bookmark-item input[type="radio"]:checked {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+    .picker-bookmark-list .bookmark-item input[type="radio"]:checked::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .picker-bookmark-list .bookmark-item img {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+    .picker-bookmark-list .bookmark-item .bm-name {
+      font-size: 0.8125rem;
+      color: var(--foreground);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .picker-bookmark-list .bookmark-item .bm-url {
+      font-size: 0.6875rem;
+      color: var(--foreground-tertiary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 140px;
+      text-align: right;
+    }
+
+    .bookmark-empty {
+      text-align: center;
+      padding: calc(var(--spacing) * 8);
+      color: var(--foreground-tertiary);
+      font-size: 0.8125rem;
+    }
+
+    /* ===== Utility ===== */
+    .hidden { display: none !important; }
+
+    /* Sortable ghost */
+    .sortable-ghost {
+      opacity: 0.4;
+      border: 1.5px dashed var(--primary) !important;
+    }
+
+    .sortable-dragging {
+      opacity: 0.8 !important;
+      background: var(--background) !important;
+      box-shadow: var(--shadow-lg) !important;
+    }
+
+    /* Highlight target group during drag */
+    .site-grid.sortable-chosen {
+      background: var(--brand-50);
+      border-radius: var(--radius-sm);
+    }
+
+    .dark .site-grid.sortable-chosen {
+      background: rgba(46, 141, 255, 0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Layer -->
+  <div id="bgWrap" class="bg-wrap"></div>
+
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="app-header">
+      <h1 class="app-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        我的工作台
+      </h1>
+
+      <div class="search-wrap">
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <input id="searchInput" placeholder="搜索站点名称或网址..." autocomplete="off">
+      </div>
+
+      <div class="header-actions">
+        <button id="themeBtn" class="icon-btn" title="切换明暗主题">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button id="bgSettingBtn" class="icon-btn" title="背景壁纸设置">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+          </svg>
+        </button>
+        <button id="addSiteBtn" class="btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          新增站点
+        </button>
+        <button id="importBookmarkBtn" class="btn-primary" style="background:var(--secondary);color:var(--foreground);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          导入书签
+        </button>
+        <button id="todoToggleBtn" class="icon-btn" title="展开/收起待办面板">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content-layout">
+      <!-- Main -->
+      <main class="main-area">
+        <div id="groupWrap"></div>
+      </main>
+
+      <!-- Side Panel -->
+      <aside id="sidePanel" class="side-panel">
+
+        <div class="panel-card clock-section">
+          <div id="timeText" class="time-text">00:00</div>
+          <div id="dateText" class="date-text"></div>
+        </div>
+
+        <div class="panel-card" id="todoPanel">
+          <div class="todo-header">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline">
+                <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              待办清单
+            </h3>
+            <button id="clearDone" class="clear-done">清空已完成</button>
+          </div>
+          <div class="todo-input-wrap">
+            <input id="todoInput" placeholder="新建待办事项...">
+            <button id="addTodo">添加</button>
+          </div>
+          <div id="todoList" class="todo-list"></div>
+
+          <!-- Data management — collapsed -->
+          <button id="dataToggle" class="data-toggle">
+            <span>数据管理</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div id="dataBody" class="data-body">
+            <div id="bookmarkSourceInfo" style="font-size:0.75rem;color:var(--foreground-secondary);padding:4px 0;"></div>
+            <button id="exportData" class="data-btn export">导出备份 JSON</button>
+            <label class="import-label">
+              导入备份文件
+              <input type="file" id="importFile" accept=".json">
+            </label>
+            <button id="resetAll" class="data-btn reset">清空全部数据</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- FAB: New Group -->
+  <button id="fabGroup" class="fab-group">
+    <span class="fab-tooltip">新建分组</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+
+  <!-- Modal: Add / Edit Site -->
+  <div id="siteModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>新增站点</h2>
+      <div class="form-group">
+        <label>分组</label>
+        <select id="siteGroup"></select>
+      </div>
+      <div class="form-group">
+        <label>网站名称</label>
+        <input id="siteName" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>网址</label>
+        <input id="siteUrl" placeholder="https://example.com" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <button id="pickBookmarkBtn" type="button" class="btn-ghost" style="font-size:0.8125rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="margin-right:4px;vertical-align:middle;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          从书签选择
+        </button>
+      </div>
+      <div class="form-group" id="pickBookmarkWrap" style="display:none;">
+        <label>从书签数据源选择</label>
+        <input id="pickBookmarkSearch" placeholder="搜索书签名称或网址..." autocomplete="off" style="margin-bottom:8px;">
+        <div class="bookmark-list picker-bookmark-list" style="max-height:240px;" id="pickBookmarkList"></div>
+      </div>
+      <div class="form-group">
+        <label>图标地址（可选）</label>
+        <input id="siteIcon" placeholder="自动抓取 favicon" autocomplete="off">
+      </div>
+      <input type="hidden" id="editId">
+      <div class="modal-footer">
+        <button id="modalCancel" class="btn-ghost">取消</button>
+        <button id="modalSave" class="btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Background Settings -->
+  <div id="bgModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>背景壁纸设置</h2>
+      <div class="bg-options">
+        <div>
+          <label>纯色背景</label>
+          <input type="color" id="bgColor" class="color-picker">
+        </div>
+        <div>
+          <label>渐变背景</label>
+          <div class="gradient-grid">
+            <button data-gradient="linear-gradient(135deg,#e0eafc,#cfdef3)" class="grad-btn">浅蓝渐变</button>
+            <button data-gradient="linear-gradient(135deg,#2c3e50,#4ca1af)" class="grad-btn">深蓝科技</button>
+            <button data-gradient="linear-gradient(135deg,#f6d365,#fda085)" class="grad-btn">暖橙</button>
+          </div>
+        </div>
+        <div>
+          <label>在线图片地址</label>
+          <input id="bgImageUrl" placeholder="粘贴图片 URL" class="bg-url-input">
+        </div>
+        <div>
+          <label>本地上传</label>
+          <label class="upload-label">
+            选择图片文件
+            <input type="file" id="bgUploadFile" accept="image/*">
+          </label>
+        </div>
+        <button id="resetBgBtn" class="reset-bg-btn">恢复默认渐变背景</button>
+      </div>
+      <div class="modal-footer" style="margin-top:calc(var(--spacing)*6)">
+        <button id="bgModalClose" class="btn-ghost">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Import Bookmarks -->
+  <div id="bookmarkModal" class="modal-overlay">
+    <div class="modal-content" style="max-width:520px;">
+      <h2>导入书签数据源</h2>
+      <p style="font-size:0.8125rem;color:var(--foreground-secondary);margin-bottom:calc(var(--spacing)*4);">导入后可在新增/编辑站点时从书签数据源搜索选择</p>
+      <div class="form-group">
+        <label>选择书签文件（HTML 格式）</label>
+        <label class="upload-label" style="border-style:dashed;">
+          选择书签文件
+          <input type="file" id="bookmarkFile" accept=".html,.htm">
+        </label>
+      </div>
+      <div id="bookmarkPreview" class="bookmark-list" style="margin-top:calc(var(--spacing)*3);"></div>
+      <div class="modal-footer" style="margin-top:calc(var(--spacing)*5);">
+        <button id="bookmarkModalClose" class="btn-ghost">关闭</button>
+        <button id="bookmarkImportBtn" class="btn-primary" disabled>导入选中</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ===================== Data Persistence (Server + localStorage) =====================
+const LS_KEY = 'workbench_data';
+const DEFAULTS = {
+  sites: [
+    {id:1,group:"开发",name:"GitHub",url:"https://github.com",icon:"https://github.com/favicon.ico",sort:0},
+    {id:2,group:"开发",name:"掘金",url:"https://juejin.cn",icon:"https://lf3-cdn-tos.bytescm.com/obj/static/xitu_juejin_web/img/favicon.605f3a7.svg",sort:1},
+    {id:3,group:"办公",name:"飞书",url:"https://lark.cn",icon:"https://sf3-cn.feishucdn.com/obj/open-platform-opengraph/favicon.ico",sort:0},
+    {id:4,group:"生活",name:"B站",url:"https://bilibili.com",icon:"https://static.hdslb.com/mobile/img/512.png",sort:0},
+  ],
+  groups: ["开发","办公","生活"],
+  todos: [],
+  bookmarkSource: [],
+  theme: "light",
+  bgConfig: {
+    type: "gradient",
+    value: "linear-gradient(135deg,#e0eafc,#cfdef3)"
+  }
+};
+
+function mergeData(raw) {
+  return { ...DEFAULTS, ...raw, bgConfig: raw.bgConfig || DEFAULTS.bgConfig };
+}
+
+// Load: try server first, fallback to localStorage, then defaults
+async function loadData() {
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    if (data && Object.keys(data).length) {
+      // Sync to localStorage for offline fallback
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      return mergeData(data);
+    }
+  } catch {}
+  // Fallback: localStorage
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return mergeData(JSON.parse(raw));
+  } catch {}
+  return { ...DEFAULTS };
+}
+
+// Save: write to both server and localStorage
+async function saveData(data) {
+  appData = data;
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+  try {
+    const res = await fetch('/api/data', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      console.warn('服务端写入失败，数据已保存在本地:', res.status, errBody);
+    }
+  } catch(e) {
+    console.warn('服务端不可达，数据已保存在本地:', e.message);
+  }
+}
+
+let appData;
+
+// ===================== DOM Cache =====================
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// ===================== Background =====================
+function applyBackground() {
+  const wrap = $("#bgWrap");
+  const cfg = appData.bgConfig;
+  if (cfg.type === "color" || cfg.type === "gradient") {
+    wrap.style.background = cfg.value;
+    wrap.style.backgroundImage = "";
+  } else if (cfg.type === "image") {
+    wrap.style.backgroundImage = `url(${cfg.value})`;
+  }
+}
+
+$("#bgSettingBtn").onclick = () => { $("#bgModal").classList.add("active"); };
+$("#bgModalClose").onclick = () => { $("#bgModal").classList.remove("active"); };
+$("#bgModal").onclick = e => { if (e.target === $("#bgModal")) $("#bgModalClose").click(); };
+
+$("#bgColor").oninput = e => {
+  appData.bgConfig = {type:"color", value:e.target.value};
+  saveData(appData); applyBackground();
+};
+
+$$(".grad-btn").forEach(btn => {
+  btn.onclick = () => {
+    appData.bgConfig = {type:"gradient", value:btn.dataset.gradient};
+    saveData(appData); applyBackground();
+  };
+});
+
+$("#bgImageUrl").onkeydown = e => {
+  if (e.key === "Enter") {
+    const url = e.target.value.trim();
+    if (url) {
+      appData.bgConfig = {type:"image", value:url};
+      saveData(appData); applyBackground();
+    }
+  }
+};
+
+$("#bgUploadFile").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    appData.bgConfig = {type:"image", value:ev.target.result};
+    saveData(appData); applyBackground();
+  };
+  reader.readAsDataURL(file);
+};
+
+$("#resetBgBtn").onclick = () => {
+  appData.bgConfig = {type:"gradient", value:"linear-gradient(135deg,#e0eafc,#cfdef3)"};
+  saveData(appData); applyBackground();
+};
+
+// ===================== Theme =====================
+function initTheme() {
+  if (appData.theme === "dark") document.documentElement.classList.add("dark");
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.classList.contains("dark");
+  $("#themeIcon").innerHTML = isDark
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
+
+$("#themeBtn").onclick = () => {
+  document.documentElement.classList.toggle("dark");
+  appData.theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+  saveData(appData);
+  updateThemeIcon();
+};
+
+// ===================== Clock =====================
+function renderTime() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,"0");
+  const m = String(now.getMinutes()).padStart(2,"0");
+  const s = String(now.getSeconds()).padStart(2,"0");
+  const weekArr = ["周日","周一","周二","周三","周四","周五","周六"];
+  $("#timeText").innerText = `${h}:${m}:${s}`;
+  $("#dateText").innerText = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekArr[now.getDay()]}`;
+}
+setInterval(renderTime, 1000);
+renderTime();
+
+// ===================== Site Cards =====================
+function renderGroups() {
+  const wrap = $("#groupWrap");
+  wrap.innerHTML = "";
+
+  appData.groups.forEach(groupName => {
+    const groupSites = appData.sites
+      .filter(s => s.group === groupName)
+      .sort((a, b) => a.sort - b.sort);
+
+    const section = document.createElement("div");
+    section.className = "group-section";
+    const hasMany = groupSites.length > 25;
+    section.innerHTML = `
+      <div class="group-header">
+        <span class="group-title">${groupName}<span class="group-badge">${groupSites.length}</span></span>
+        <div class="group-actions">
+          ${hasMany ? `<button class="group-toggle visible" data-group="${groupName}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            展开 (${groupSites.length - 25} 项)
+          </button>` : ''}
+          <button class="text-action add-site" data-group="${groupName}">+ 添加站点</button>
+          <button class="text-action del-group" data-group="${groupName}">删除分组</button>
+        </div>
+      </div>
+      <div class="site-grid${hasMany ? ' collapsed' : ''}" data-group="${groupName}"></div>
+    `;
+
+    const grid = section.querySelector(".site-grid");
+
+    groupSites.forEach(site => {
+      const card = document.createElement("a");
+      card.href = site.url;
+      card.target = "_blank";
+      card.className = "site-card";
+      card.dataset.id = site.id;
+      card.innerHTML = `
+        <img src="${site.icon || `https://www.google.com/s2/favicons?domain=${site.url}&sz=64`}"
+             alt="${site.name}"
+             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%224%22 fill=%22%23e5e5ea%22/><text x=%2212%22 y=%2216%22 text-anchor=%22middle%22 font-size=%2214%22 fill=%22%238e8e93%22>${site.name.charAt(0)}</text></svg>'">
+        <span class="site-name">${site.name}</span>
+        <button class="site-edit" data-id="${site.id}" title="编辑">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="site-del" data-id="${site.id}" title="删除">✕</button>
+      `;
+      card.oncontextmenu = e => { e.preventDefault(); openModal(site.id); };
+      grid.appendChild(card);
+    });
+
+    // Site edit/delete handler
+    grid.addEventListener("click", e => {
+      const editBtn = e.target.closest(".site-edit");
+      const delBtn = e.target.closest(".site-del");
+      if (!editBtn && !delBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const sid = Number((editBtn || delBtn).dataset.id);
+      if (delBtn && confirm("确定删除此站点？")) {
+        appData.sites = appData.sites.filter(s => s.id !== sid);
+        saveData(appData);
+        renderGroups();
+      }
+      if (editBtn) {
+        openModal(sid);
+      }
+    });
+
+    // Group toggle
+    section.addEventListener("click", e => {
+      const toggle = e.target.closest(".group-toggle");
+      if (!toggle) return;
+      e.stopPropagation();
+      const grid = section.querySelector(".site-grid");
+      const isCollapsed = grid.classList.toggle("collapsed");
+      const extra = groupSites.length - 25;
+      toggle.innerHTML = isCollapsed
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>展开 (${extra} 项)`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>收起`;
+    });
+
+    // Sortable — cross-group drag
+    new Sortable(grid, {
+      group: "sites",
+      animation: 150,
+      ghostClass: "sortable-ghost",
+      dragClass: "sortable-dragging",
+      onEnd: function(evt) {
+        const card = evt.item;
+        const siteId = Number(card.dataset.id);
+        const targetGrid = evt.to;
+        const newGroup = targetGrid.dataset.group;
+        const fromGroup = evt.from.dataset.group;
+
+        // Update group if moved across grids
+        const target = appData.sites.find(s => s.id === siteId);
+        if (target && newGroup !== fromGroup) {
+          target.group = newGroup;
+        }
+
+        // Re-sort within the target group
+        const cards = Array.from(targetGrid.querySelectorAll(".site-card"));
+        cards.forEach((c, idx) => {
+          const sid = Number(c.dataset.id);
+          const s = appData.sites.find(s => s.id === sid);
+          if (s) s.sort = idx;
+        });
+
+        saveData(appData);
+
+        // If group changed, re-render to keep grid counts correct
+        if (newGroup !== fromGroup) {
+          renderGroups();
+        }
+      }
+    });
+
+    // Group action buttons
+    section.querySelector(".add-site").onclick = () => openModal(null, groupName);
+    section.querySelector(".del-group").onclick = () => {
+      if (confirm(`确定删除分组「${groupName}」？组内站点将全部清空`)) {
+        appData.groups = appData.groups.filter(g => g !== groupName);
+        appData.sites = appData.sites.filter(s => s.group !== groupName);
+        saveData(appData);
+        renderGroups();
+      }
+    };
+
+    wrap.appendChild(section);
+  });
+
+  // Add group via FAB
+  $("#fabGroup").onclick = () => {
+    const name = prompt("输入分组名称");
+    if (name && !appData.groups.includes(name)) {
+      appData.groups.push(name);
+      saveData(appData);
+      renderGroups();
+    }
+  };
+}
+
+// ===================== Modal =====================
+function openModal(editId = null, defGroup = "") {
+  $("#siteModal").classList.add("active");
+  $("#editId").value = editId || "";
+  $("#siteGroup").innerHTML = appData.groups.map(g => `<option value="${g}">${g}</option>`).join("");
+  if (defGroup) $("#siteGroup").value = defGroup;
+  // Reset bookmark picker
+  $("#pickBookmarkWrap").style.display = "none";
+  $("#pickBookmarkList").innerHTML = "";
+
+  if (editId) {
+    const target = appData.sites.find(s => s.id == editId);
+    $("#siteName").value = target.name;
+    $("#siteUrl").value = target.url;
+    $("#siteIcon").value = target.icon || "";
+    $("#siteModal h2").innerText = "编辑站点";
+  } else {
+    $("#siteName").value = "";
+    $("#siteUrl").value = "";
+    $("#siteIcon").value = "";
+    $("#siteModal h2").innerText = "新增站点";
+  }
+}
+
+function closeModal() { $("#siteModal").classList.remove("active"); }
+
+// Pick bookmark from data source (single site mode)
+function renderPickBookmarkList(filter = "") {
+  const list = $("#pickBookmarkList");
+  list.innerHTML = "";
+  const source = appData.bookmarkSource || [];
+  if (!source.length) {
+    list.innerHTML = '<div class="bookmark-empty">暂无书签数据源，请先导入书签</div>';
+    return;
+  }
+  const kw = filter.toLowerCase();
+  const filtered = kw ? source.filter(bm => bm.name.toLowerCase().includes(kw) || bm.url.toLowerCase().includes(kw)) : source;
+  if (!filtered.length) {
+    list.innerHTML = '<div class="bookmark-empty">未匹配到书签</div>';
+    return;
+  }
+  filtered.forEach((bm, idx) => {
+    const item = document.createElement("div");
+    item.className = "bookmark-item";
+    item.innerHTML = `
+      <input type="radio" name="pickBm" data-idx="${idx}">
+      <img src="${bm.icon || `https://www.google.com/s2/favicons?domain=${bm.url}&sz=64`}" alt="" onerror="this.style.display='none'">
+      <span class="bm-name">${bm.name}</span>
+      <span class="bm-url">${bm.url}</span>
+    `;
+    item.onclick = () => {
+      item.querySelector("input").click();
+      $("#siteName").value = bm.name;
+      $("#siteUrl").value = bm.url;
+      $("#siteIcon").value = bm.icon || "";
+      $("#pickBookmarkWrap").style.display = "none";
+      $("#pickBookmarkSearch").value = "";
+    };
+    list.appendChild(item);
+  });
+}
+
+$("#pickBookmarkBtn").onclick = () => {
+  const source = appData.bookmarkSource || [];
+  if (!source.length) {
+    if (confirm("书签数据源为空，是否先去导入书签？")) $("#importBookmarkBtn").click();
+    return;
+  }
+  $("#pickBookmarkWrap").style.display = "block";
+  $("#pickBookmarkSearch").value = "";
+  renderPickBookmarkList();
+};
+
+$("#pickBookmarkSearch").oninput = e => {
+  renderPickBookmarkList(e.target.value.trim());
+};
+
+$("#addSiteBtn").onclick = () => openModal();
+$("#modalCancel").onclick = closeModal;
+$("#siteModal").onclick = e => { if (e.target === $("#siteModal")) closeModal(); };
+
+$("#modalSave").onclick = async () => {
+  const id = $("#editId").value;
+  const group = $("#siteGroup").value.trim();
+  const name = $("#siteName").value.trim();
+  const url = $("#siteUrl").value.trim();
+  const icon = $("#siteIcon").value.trim();
+  if (!name || !url || !group) return alert("名称、网址、分组不能为空");
+
+  if (id) {
+    const idx = appData.sites.findIndex(s => s.id == id);
+    appData.sites[idx] = { ...appData.sites[idx], group, name, url, icon };
+  } else {
+    const newId = appData.sites.length ? Math.max(...appData.sites.map(s => s.id)) + 1 : 1;
+    const maxSort = appData.sites.filter(s => s.group === group).reduce((m, i) => Math.max(m, i.sort), -1);
+    appData.sites.push({ id: newId, group, name, url, icon, sort: maxSort + 1 });
+  }
+  await saveData(appData);
+  renderGroups();
+  closeModal();
+};
+
+// ===================== Search =====================
+$("#searchInput").oninput = e => {
+  const key = e.target.value.toLowerCase();
+  $$(".site-card").forEach(card => {
+    const name = card.querySelector(".site-name").innerText.toLowerCase();
+    const site = appData.sites.find(s => s.id == card.dataset.id);
+    const show = name.includes(key) || (site && site.url.toLowerCase().includes(key));
+    card.style.display = show ? "" : "none";
+  });
+};
+
+// ===================== Todo =====================
+function renderTodo() {
+  const list = $("#todoList");
+  list.innerHTML = "";
+  appData.todos.forEach((item, idx) => {
+    const div = document.createElement("div");
+    div.className = "todo-item";
+    div.innerHTML = `
+      <input type="checkbox" data-idx="${idx}" ${item.done ? "checked" : ""} class="todo-check">
+      <span class="todo-text ${item.done ? "done" : ""}">${item.text}</span>
+      <button data-idx="${idx}" class="todo-del">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    `;
+    div.querySelector(".todo-check").onchange = function() {
+      appData.todos[this.dataset.idx].done = this.checked;
+      saveData(appData); renderTodo();
+    };
+    div.querySelector(".todo-del").onclick = function() {
+      appData.todos.splice(Number(this.dataset.idx), 1);
+      saveData(appData); renderTodo();
+    };
+    list.appendChild(div);
+  });
+}
+
+$("#addTodo").onclick = () => {
+  const text = $("#todoInput").value.trim();
+  if (!text) return;
+  appData.todos.push({ text, done: false });
+  $("#todoInput").value = "";
+  saveData(appData); renderTodo();
+};
+
+$("#todoInput").onkeydown = e => { if (e.key === "Enter") $("#addTodo").click(); };
+$("#clearDone").onclick = () => {
+  appData.todos = appData.todos.filter(t => !t.done);
+  saveData(appData); renderTodo();
+};
+$("#todoToggleBtn").onclick = () => $("#sidePanel").classList.toggle("hidden");
+
+// ===================== Data Toggle =====================
+$("#dataToggle").onclick = () => {
+  const body = $("#dataBody");
+  const toggle = $("#dataToggle");
+  body.classList.toggle("open");
+  toggle.classList.toggle("open");
+};
+
+// ===================== Data Import/Export =====================
+$("#exportData").onclick = () => {
+  const blob = new Blob([JSON.stringify(appData, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `工作台备份_${new Date().toLocaleDateString()}.json`;
+  a.click();
+};
+
+$("#importFile").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      appData = JSON.parse(ev.target.result);
+      await saveData(appData);
+      renderAll();
+      alert("导入成功！");
+    } catch(err) {
+      alert("文件格式错误");
+    }
+  };
+  reader.readAsText(file);
+};
+
+function updateBookmarkSourceInfo() {
+  const el = $("#bookmarkSourceInfo");
+  const src = appData.bookmarkSource || [];
+  if (src.length) {
+    el.innerHTML = `📑 书签数据源: ${src.length} 条 · <a href="javascript:void(0)" id="clearBookmarkSource" style="color:var(--error);text-decoration:none;">清空</a>`;
+    el.querySelector("#clearBookmarkSource").onclick = () => {
+      if (confirm("确定清空书签数据源？")) {
+        appData.bookmarkSource = [];
+        saveData(appData);
+        updateBookmarkSourceInfo();
+      }
+    };
+  } else {
+    el.innerHTML = `📑 书签数据源: 空`;
+  }
+}
+
+$("#resetAll").onclick = async () => {
+  if (confirm("确定清空所有站点、待办、配置？无法恢复！")) {
+    appData = { ...DEFAULTS };
+    await saveData(appData);
+    renderAll();
+  }
+};
+
+// ===================== Bookmark Import =====================
+let parsedBookmarks = [];
+
+function parseBookmarkHTML(htmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlText, "text/html");
+  const links = doc.querySelectorAll("a[href]");
+  const bookmarks = [];
+  const seen = new Set();
+
+  links.forEach(a => {
+    let name = a.textContent.trim();
+    let url = a.getAttribute("href").trim();
+    if (!name || !url) return;
+    if (seen.has(url)) return;
+    seen.add(url);
+
+    // Ensure protocol
+    if (!/^https?:\/\//i.test(url)) {
+      if (url.startsWith("//")) url = "https:" + url;
+      else if (url.startsWith("/")) url = "https://" + window.location.host + url;
+      else url = "https://" + url;
+    }
+
+    // Try to get favicon
+    let domain = "";
+    try { domain = new URL(url).hostname; } catch(e) {}
+    const icon = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : "";
+
+    bookmarks.push({ name, url, icon });
+  });
+
+  return bookmarks;
+}
+
+function openBookmarkModal() {
+  parsedBookmarks = [];
+  $("#bookmarkPreview").innerHTML = "";
+  $("#bookmarkImportBtn").disabled = true;
+  $("#bookmarkFile").value = "";
+  $("#bookmarkModal").classList.add("active");
+}
+
+function closeBookmarkModal() {
+  $("#bookmarkModal").classList.remove("active");
+}
+
+$("#importBookmarkBtn").onclick = openBookmarkModal;
+$("#bookmarkModalClose").onclick = closeBookmarkModal;
+$("#bookmarkModal").onclick = e => { if (e.target === $("#bookmarkModal")) closeBookmarkModal(); };
+
+$("#bookmarkFile").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      parsedBookmarks = parseBookmarkHTML(ev.target.result);
+      renderBookmarkPreview();
+    } catch(err) {
+      alert("书签文件解析失败");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+};
+
+function renderBookmarkPreview() {
+  const preview = $("#bookmarkPreview");
+  preview.innerHTML = "";
+
+  if (parsedBookmarks.length === 0) {
+    preview.innerHTML = '<div class="bookmark-empty">未找到书签，请确认文件格式正确</div>';
+    $("#bookmarkImportBtn").disabled = true;
+    return;
+  }
+
+  parsedBookmarks.forEach((bm, idx) => {
+    const item = document.createElement("div");
+    item.className = "bookmark-item";
+    item.innerHTML = `
+      <input type="checkbox" data-idx="${idx}" checked>
+      <img src="${bm.icon}" alt="" onerror="this.style.display='none'">
+      <span class="bm-name" title="${bm.name}">${bm.name}</span>
+      <span class="bm-url" title="${bm.url}">${bm.url}</span>
+    `;
+    const cb = item.querySelector("input[type='checkbox']");
+    cb.onchange = () => { $("#bookmarkImportBtn").disabled = !preview.querySelectorAll("input[type='checkbox']:checked").length; };
+    preview.appendChild(item);
+  });
+
+  $("#bookmarkImportBtn").disabled = false;
+}
+
+$("#bookmarkImportBtn").onclick = async () => {
+  const checkboxes = $("#bookmarkPreview").querySelectorAll("input[type='checkbox']:checked");
+  if (!checkboxes.length) return;
+
+  const selected = [];
+  checkboxes.forEach(cb => {
+    const idx = Number(cb.dataset.idx);
+    const bm = parsedBookmarks[idx];
+    if (bm) selected.push(bm);
+  });
+
+  if (!selected.length) return;
+
+  appData.bookmarkSource = selected;
+  await saveData(appData);
+  closeBookmarkModal();
+  updateBookmarkSourceInfo();
+  alert(`成功导入 ${selected.length} 条书签到数据源！`);
+};
+
+// ===================== Init =====================
+function renderAll() {
+  initTheme();
+  applyBackground();
+  renderGroups();
+  renderTodo();
+  updateBookmarkSourceInfo();
+}
+
+(async () => {
+  appData = await loadData();
+  renderAll();
+})();
+</script>
+</body>
+</html>
