@@ -22,10 +22,9 @@ services:
     # 如需改用其他端口（如 8080），修改左侧即可：8080:3110
     ports:
       - "3110:3110"
-    # 数据持久化：将宿主机的 data.json 挂载到容器内
-    # 这样容器重建后数据不丢失
+    # 数据持久化：使用 Docker named volume，重建容器不丢失
     volumes:
-      - ./data.json:/app/data.json
+      - workbench_data:/app/data
     # 环境变量（可覆盖默认端口）
     environment:
       - PORT=3110
@@ -39,3 +38,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+
+volumes:
+  workbench_data:

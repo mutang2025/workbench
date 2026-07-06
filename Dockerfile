@@ -22,7 +22,7 @@ COPY server.js workbench.html ./
 
 # 创建数据目录并设置权限（data.json 由运行时写入）
 RUN mkdir -p /app/data && \
-    touch /app/data.json && \
+ touch /app/data/data.json && \
     chown -R appuser:appgroup /app
 
 # 切换到非 root 用户
