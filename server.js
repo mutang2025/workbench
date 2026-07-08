@@ -23,7 +23,14 @@ function serveFile(res, filePath) {
       res.end('Not Found');
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    const hdrs = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
+    // Prevent caching of HTML to ensure latest code
+    if (ext === '.html') {
+      hdrs['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      hdrs['Pragma'] = 'no-cache';
+      hdrs['Expires'] = '0';
+    }
+    res.writeHead(200, hdrs);
     res.end(data);
   });
 }
