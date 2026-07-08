@@ -1613,7 +1613,14 @@
       </div>
       <div class="form-group">
         <label>图标地址（可选）</label>
-        <input id="siteIcon" placeholder="自动抓取 favicon" autocomplete="off">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="siteIcon" placeholder="留空则显示网站名称首字" autocomplete="off" style="flex:1;">
+          <label class="upload-label" style="flex-shrink:0;height:36px;padding:0 12px;display:inline-flex;align-items:center;gap:4px;border-radius:var(--radius-full);background:var(--secondary);cursor:pointer;font-size:0.8125rem;color:var(--foreground-secondary);border:1px solid var(--border);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            上传
+            <input type="file" id="siteIconUpload" accept="image/*" style="display:none;">
+          </label>
+        </div>
       </div>
       <input type="hidden" id="editId">
       <div class="modal-footer">
@@ -1929,9 +1936,9 @@ function renderGroups() {
       card.className = "site-card";
       card.dataset.id = site.id;
       card.innerHTML = `
-        <img src="${site.icon || `https://www.google.com/s2/favicons?domain=${site.url}&sz=64`}"
+        <img src="${site.icon || `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e5e5ea"/><text x="12" y="16" text-anchor="middle" font-size="14" fill="#8e8e93">${site.name.charAt(0)}</text></svg>`)}`}"
              alt="${site.name}"
-             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%224%22 fill=%22%23e5e5ea%22/><text x=%2212%22 y=%2216%22 text-anchor=%22middle%22 font-size=%2214%22 fill=%22%238e8e93%22>${site.name.charAt(0)}</text></svg>'">
+             onerror="this.src='data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e5e5ea"/><text x="12" y="16" text-anchor="middle" font-size="14" fill="#8e8e93">${site.name.charAt(0)}</text></svg>`)}'">
         <span class="site-name">${site.name}</span>
         <button class="site-edit" data-id="${site.id}" title="编辑">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2083,7 +2090,7 @@ function renderPickBookmarkList(filter = "") {
     item.className = "bookmark-item";
     item.innerHTML = `
       <input type="radio" name="pickBm" data-idx="${idx}">
-      <img src="${bm.icon || `https://www.google.com/s2/favicons?domain=${bm.url}&sz=64`}" alt="" onerror="this.style.display='none'">
+      <img src="${bm.icon || `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e5e5ea"/><text x="12" y="16" text-anchor="middle" font-size="14" fill="#8e8e93">${bm.name.charAt(0)}</text></svg>`)}`}" alt="" onerror="this.style.display='none'">
       <span class="bm-name">${bm.name}</span>
       <span class="bm-url">${bm.url}</span>
     `;
@@ -2117,6 +2124,17 @@ $("#pickBookmarkSearch").oninput = e => {
 $("#addSiteBtn").onclick = () => openModal();
 $("#modalCancel").onclick = closeModal;
 $("#siteModal").onclick = e => { if (e.target === $("#siteModal")) closeModal(); };
+
+// ===================== Icon Upload =====================
+$("#siteIconUpload").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    $("#siteIcon").value = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+};
 
 $("#modalSave").onclick = async () => {
   const id = $("#editId").value;
@@ -2279,7 +2297,7 @@ function parseBookmarkHTML(htmlText) {
     // Try to get favicon
     let domain = "";
     try { domain = new URL(url).hostname; } catch(e) {}
-    const icon = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : "";
+    const icon = ""; // no auto-favicon, use first char fallback in display
 
     bookmarks.push({ name, url, icon });
   });
@@ -2334,7 +2352,7 @@ function renderBookmarkPreview() {
     item.className = "bookmark-item";
     item.innerHTML = `
       <input type="checkbox" data-idx="${idx}" checked>
-      <img src="${bm.icon}" alt="" onerror="this.style.display='none'">
+      <img src="${bm.icon || `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#e5e5ea"/><text x="12" y="16" text-anchor="middle" font-size="14" fill="#8e8e93">${bm.name.charAt(0)}</text></svg>`)}`}" alt="" onerror="this.style.display='none'">
       <span class="bm-name" title="${bm.name}">${bm.name}</span>
       <span class="bm-url" title="${bm.url}">${bm.url}</span>
     `;
