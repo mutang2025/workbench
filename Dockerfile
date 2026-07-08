@@ -15,14 +15,16 @@ WORKDIR /app
 # 创建非 root 用户运行服务，提升安全性
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# 复制应用文件
-# 先复制 package.json（若将来引入依赖可利用 Docker 缓存层）
-# 本项目零依赖，直接复制源码
-COPY server.js workbench.html ./
+# 复制 package.json 并安装依赖
+COPY package.json ./
+RUN npm install --production && rm -rf ~/.npm
 
-# 创建数据目录并设置权限（data.json 由运行时写入）
+# 复制应用文件
+COPY server.js workbench.html favicon.ico ./
+
+# 创建数据目录并设置权限
 RUN mkdir -p /app/data && \
- touch /app/data/data.json && \
+    touch /app/data/data.json && \
     chown -R appuser:appgroup /app
 
 # 切换到非 root 用户
@@ -31,14 +33,12 @@ USER appuser
 # 对外暴露端口
 EXPOSE 3110
 
-# 声明数据卷（data.json 持久化）
-VOLUME ["/app/data.json"]
-
 # 环境变量默认值
 ENV PORT=3110
 ENV NODE_ENV=production
+ENV DATABASE_URL=postgresql://lgc2025:lgc2025_pass_pg@postgresql:5432/workbench
 
-# 健康检查：每 30 秒检测一次服务是否存活
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget -qO- http://localhost:3110/api/data || exit 1
 

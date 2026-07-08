@@ -1,9 +1,11 @@
 const http = require('http');
-const fs = require('fs');
 const path = require('path');
+const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 3110;
-const DATA_FILE = path.join(__dirname, 'data', 'data.json');
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://lgc2025:lgc2025_pass_pg@postgresql:5432/workbench';
+
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -16,6 +18,7 @@ const MIME = {
 };
 
 function serveFile(res, filePath) {
+  const fs = require('fs');
   const ext = path.extname(filePath);
   fs.readFile(filePath, (err, data) => {
     if (err) {
@@ -24,7 +27,6 @@ function serveFile(res, filePath) {
       return;
     }
     const hdrs = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
-    // Prevent caching of HTML to ensure latest code
     if (ext === '.html') {
       hdrs['Cache-Control'] = 'no-cache, no-store, must-revalidate';
       hdrs['Pragma'] = 'no-cache';
@@ -35,10 +37,67 @@ function serveFile(res, filePath) {
   });
 }
 
+async function loadData() {
+  const { rows: sites } = await pool.query('SELECT id, group_name AS "group", name, url, icon, sort FROM sites ORDER BY sort ASC, id ASC');
+  const { rows: todos } = await pool.query('SELECT id, text, done, created_at, completed_at FROM todos ORDER BY id ASC');
+  const { rows: bookmarks } = await pool.query('SELECT name, url, icon FROM bookmark_source ORDER BY id ASC');
+  const { rows: groups } = await pool.query('SELECT name FROM app_groups ORDER BY id ASC');
+  return {
+    sites,
+    todos,
+    bookmarkSource: bookmarks,
+    groups: groups.map(r => r.name),
+  };
+}
+
+async function saveData(data) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Save groups
+    await client.query('DELETE FROM app_groups');
+    for (const g of data.groups || []) {
+      await client.query('INSERT INTO app_groups (name) VALUES ($1)', [g]);
+    }
+
+    // Save sites
+    await client.query('DELETE FROM sites');
+    for (const s of data.sites || []) {
+      await client.query(
+        'INSERT INTO sites (id, group_name, name, url, icon, sort) VALUES ($1, $2, $3, $4, $5, $6)',
+        [s.id, s.group, s.name, s.url, s.icon || '', s.sort ?? 0]
+      );
+    }
+
+    // Save todos — preserve id, created_at, update completed_at on completion
+    await client.query('DELETE FROM todos');
+    for (const t of data.todos || []) {
+      await client.query(
+        'INSERT INTO todos (id, text, done, created_at, completed_at) VALUES ($1, $2, $3, $4, $5)',
+        [t.id, t.text, t.done || false, t.created_at || new Date().toISOString(), t.completed_at || null]
+      );
+    }
+
+    // Save bookmarks
+    await client.query('DELETE FROM bookmark_source');
+    for (const b of data.bookmarkSource || []) {
+      await client.query('INSERT INTO bookmark_source (name, url, icon) VALUES ($1, $2, $3)', [b.name, b.url, b.icon || '']);
+    }
+
+    await client.query('COMMIT');
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
 const server = http.createServer((req, res) => {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -48,17 +107,74 @@ const server = http.createServer((req, res) => {
 
   // GET /api/data
   if (req.method === 'GET' && req.url === '/api/data') {
-    fs.readFile(DATA_FILE, 'utf-8', (err, raw) => {
-      const hdrs = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate' };
-      if (err) {
-        res.writeHead(200, hdrs);
-        return res.end(JSON.stringify({}));
-      }
+    loadData()
+      .then(data => {
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        });
+        res.end(JSON.stringify(data));
+      })
+      .catch(err => {
+        console.error('GET /api/data error:', err);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: '读取数据失败' }));
+      });
+    return;
+  }
+
+  // GET /api/todos/history?from=YYYY-MM-DD&to=YYYY-MM-DD
+  if (req.method === 'GET' && req.url.startsWith('/api/todos/history')) {
+    const url = new URL(req.url, 'http://localhost');
+    const from = url.searchParams.get('from') || '1970-01-01';
+    const to = url.searchParams.get('to') || '2099-12-31';
+    pool.query(
+      `SELECT id, text, done, created_at, completed_at FROM todos
+       WHERE done = true AND completed_at IS NOT NULL
+         AND completed_at >= $1::timestamp
+         AND completed_at < ($2::timestamp + INTERVAL '1 day')
+       ORDER BY completed_at DESC`,
+      [from, to]
+    )
+      .then(result => {
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        });
+        res.end(JSON.stringify(result.rows));
+      })
+      .catch(err => {
+        console.error('GET /api/todos/history error:', err);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: '查询历史失败' }));
+      });
+    return;
+  }
+
+  // DELETE /api/todos — delete one or more todos by id
+  if (req.method === 'DELETE' && req.url === '/api/todos') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
       try {
-        res.writeHead(200, hdrs);
-        res.end(raw);
+        const { ids } = JSON.parse(body);
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+          res.writeHead(400);
+          return res.end(JSON.stringify({ error: 'ids 不能为空' }));
+        }
+        const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+        pool.query(`DELETE FROM todos WHERE id IN (${placeholders})`, ids)
+          .then(() => {
+            res.end(JSON.stringify({ ok: true }));
+          })
+          .catch(err => {
+            console.error('DELETE /api/todos error:', err);
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: '删除失败' }));
+          });
       } catch {
-        res.end(JSON.stringify({}));
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: '无效的 JSON' }));
       }
     });
     return;
@@ -71,13 +187,15 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const data = JSON.parse(body);
-        fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8', (err) => {
-          if (err) {
+        saveData(data)
+          .then(() => {
+            res.end(JSON.stringify({ ok: true }));
+          })
+          .catch(err => {
+            console.error('PUT /api/data error:', err);
             res.writeHead(500);
-            return res.end(JSON.stringify({ error: '写入失败' }));
-          }
-          res.end(JSON.stringify({ ok: true }));
-        });
+            res.end(JSON.stringify({ error: '保存数据失败' }));
+          });
       } catch {
         res.writeHead(400);
         res.end(JSON.stringify({ error: '无效的 JSON' }));
@@ -86,11 +204,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Static files — default to workbench.html
-  let filePath = req.url === '/' ? '/workbench.html' : req.url;
-  filePath = path.join(__dirname, filePath);
+  // Static files
+  if (req.url === '/') filePath = '/workbench.html';
+  else if (req.url === '/favicon.ico') filePath = '/favicon.ico';
+  else filePath = req.url;
+  // Strip leading / to prevent path.join from treating it as absolute
+  filePath = path.join(__dirname, filePath.replace(/^\//, ''));
 
-  // Security: prevent escaping the directory
   if (!filePath.startsWith(__dirname)) {
     res.writeHead(403);
     return res.end('Forbidden');

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人工作台 - Apple 风格</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
@@ -735,22 +736,6 @@
       color: var(--primary);
     }
 
-    .clear-done {
-      border: none;
-      background: none;
-      font-size: 0.75rem;
-      color: var(--error);
-      cursor: pointer;
-      font-family: var(--font-sans);
-      font-weight: 500;
-      opacity: 0.7;
-      transition: opacity 0.15s ease;
-    }
-
-    .clear-done:hover {
-      opacity: 1;
-    }
-
     .todo-input-wrap {
       display: flex;
       gap: calc(var(--spacing) * 2);
@@ -820,11 +805,6 @@
       align-items: center;
       gap: calc(var(--spacing) * 2);
       padding: calc(var(--spacing) * 1.5) 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .todo-item:last-child {
-      border-bottom: none;
     }
 
     .todo-check {
@@ -845,6 +825,12 @@
       border-color: var(--success);
       background: var(--success);
       position: relative;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 0.8125rem;
+      color: var(--foreground);
     }
 
     .todo-check:checked::after {
@@ -887,6 +873,163 @@
     .todo-del:hover {
       background: var(--background-tertiary);
       color: var(--error);
+    }
+
+    .todo-time {
+      font-size: 0.6875rem;
+      color: var(--foreground-tertiary);
+      margin-left: 28px;
+      margin-top: -4px;
+      margin-bottom: 4px;
+    }
+
+    .todo-history-btn {
+      border: none;
+      background: none;
+      font-size: 0.75rem;
+      color: var(--primary);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      opacity: 0.7;
+      transition: opacity 0.15s ease;
+    }
+    .todo-history-btn:hover { opacity: 1; }
+
+    /* ===== History Modal ===== */
+    #historyModal .modal-content {
+      max-width: 680px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .history-filters {
+      display: flex;
+      gap: calc(var(--spacing) * 2);
+      align-items: center;
+      margin-bottom: calc(var(--spacing) * 3);
+      flex-wrap: wrap;
+    }
+    .history-filters label {
+      font-size: 0.8125rem;
+      color: var(--foreground-secondary);
+      white-space: nowrap;
+    }
+    .history-filters input[type="date"] {
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      outline: none;
+    }
+    .history-filters input[type="date"]:focus {
+      border-color: var(--border-focus);
+    }
+    .history-filters button {
+      padding: 4px 14px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .history-filters button:hover {
+      filter: brightness(0.92);
+    }
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+    .history-table th {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 2px solid var(--border);
+      color: var(--foreground-secondary);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      position: sticky;
+      top: 0;
+      background: var(--background);
+    }
+    .history-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--foreground);
+      vertical-align: middle;
+    }
+    .history-table tr:last-child td {
+      border-bottom: none;
+    }
+    .history-table tr:hover td {
+      background: var(--secondary);
+    }
+    .history-table .td-time {
+      font-size: 0.75rem;
+      color: var(--foreground-secondary);
+      white-space: nowrap;
+    }
+    .history-del-btn {
+      border: none;
+      background: none;
+      color: var(--foreground-tertiary);
+      cursor: pointer;
+      font-size: 0.8125rem;
+      padding: 2px 6px;
+      border-radius: var(--radius);
+      transition: color 0.15s, background 0.15s;
+    }
+    .history-del-btn:hover {
+      color: var(--error);
+      background: var(--background-tertiary);
+    }
+    .history-check {
+      cursor: pointer;
+    }
+    .history-empty {
+      text-align: center;
+      padding: calc(var(--spacing) * 6) 0;
+      color: var(--foreground-tertiary);
+      font-size: 0.8125rem;
+    }
+    .history-pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: calc(var(--spacing) * 2);
+      padding-top: calc(var(--spacing) * 2);
+      border-top: 1px solid var(--border);
+      margin-top: calc(var(--spacing) * 2);
+    }
+    .history-pagination button {
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--secondary);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .history-pagination button:hover {
+      background: var(--background-tertiary);
+    }
+    .history-pagination button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .history-pagination span {
+      font-size: 0.75rem;
+      color: var(--foreground-secondary);
     }
 
     /* ===== Data — collapsed under Todo ===== */
@@ -1547,7 +1690,9 @@
               </svg>
               待办清单
             </h3>
-            <button id="clearDone" class="clear-done">清空已完成</button>
+            <div style="display:flex;gap:8px;">
+              <button id="historyBtn" class="todo-history-btn">历史</button>
+            </div>
           </div>
           <div class="todo-input-wrap">
             <input id="todoInput" placeholder="新建待办事项...">
@@ -1686,23 +1831,77 @@
     </div>
   </div>
 
+  <!-- History Modal -->
+  <div id="historyModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>已完成待办历史</h2>
+      <div class="history-filters">
+        <label>从 <input type="date" id="historyFrom"></label>
+        <label>到 <input type="date" id="historyTo"></label>
+        <button id="historyQueryBtn">查询</button>
+        <input type="text" id="historySearch" placeholder="搜索内容..." style="padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--secondary);color:var(--foreground);font-size:0.8125rem;outline:none;flex:1;min-width:120px;">
+        <button id="historyCloseBtn" class="btn-ghost" style="margin-left:auto;">关闭</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="historyTable" class="history-table">
+          <thead>
+            <tr>
+              <th style="width:30px;"><input type="checkbox" id="historySelectAll"></th>
+              <th style="width:40%;">内容</th>
+              <th style="width:20%;">完成时间</th>
+              <th style="width:20%;">创建时间</th>
+              <th style="width:50px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+      <div class="history-pagination" id="historyPagination">
+        <button id="historyBatchDelBtn" class="btn-ghost" style="color:var(--error);font-size:0.75rem;border:1px solid var(--border);padding:4px 12px;border-radius:var(--radius);cursor:pointer;">删除选中</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 // ===================== Password Lock =====================
 let appData;
 const PASSWORD = 'lgc123';
 const LOCK_CACHE_KEY = 'workbench_lock';
 
-async function sha256(text) {
-  const enc = new TextEncoder();
-  const data = enc.encode(text);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+// Pure JS SHA-256 (works without HTTPS, unlike crypto.subtle)
+function sha256(text) {
+  function r(n,c){return(n<<c|n>>>32-c)>>>0}
+  function ch(x,y,z){return(x&y)^(~x&z)}
+  function maj(x,y,z){return(x&y)^(x&z)^(y&z)}
+  function s0(x){return r(x,2)^r(x,13)^r(x,22)}
+  function s1(x){return r(x,6)^r(x,11)^r(x,25)}
+  function g0(x){return r(x,7)^r(x,18)^(x>>>3)}
+  function g1(x){return r(x,17)^r(x,19)^(x>>>10)}
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  const enc=new TextEncoder(), msg=enc.encode(text);
+  const len=msg.length*8, m=new Uint8Array(64*Math.ceil((msg.length+9)/64));
+  m.set(msg); m[msg.length]=0x80;
+  new DataView(m.buffer).setUint32(m.length-4,len>>>0);
+  new DataView(m.buffer).setUint32(m.length-8,Math.floor(len/0x100000000));
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  for(let i=0;i<m.length;i+=64){
+    const W=[],a=new DataView(m.buffer,i,64);
+    for(let t=0;t<16;t++)W[t]=a.getUint32(t*4);
+    for(let t=16;t<64;t++)W[t]=(g1(W[t-2])+W[t-7]+g0(W[t-15])+W[t-16])>>>0;
+    let [a0,b0,c0,d0,e0,f0,g0x,h0]=H;
+    for(let t=0;t<64;t++){
+      const T1=(h0+s1(e0)+ch(e0,f0,g0x)+K[t]+W[t])>>>0,T2=(s0(a0)+maj(a0,b0,c0))>>>0;
+      h0=g0x;g0x=f0;f0=e0;e0=(d0+T1)>>>0;d0=c0;c0=b0;b0=a0;a0=(T1+T2)>>>0;
+    }
+    H=[(H[0]+a0)>>>0,(H[1]+b0)>>>0,(H[2]+c0)>>>0,(H[3]+d0)>>>0,(H[4]+e0)>>>0,(H[5]+f0)>>>0,(H[6]+g0x)>>>0,(H[7]+h0)>>>0];
+  }
+  return H.map(h=>h.toString(16).padStart(8,'0')).join('');
 }
 
 async function checkLock() {
   const cached = localStorage.getItem(LOCK_CACHE_KEY);
   if (cached) {
-    const expected = await sha256(PASSWORD);
+    const expected = sha256(PASSWORD);
     if (cached === expected) return true; // cached and valid
   }
   return false;
@@ -1726,8 +1925,8 @@ async function checkLock() {
   async function attempt() {
     const pw = input.value.trim();
     if (!pw) { errEl.textContent = '请输入密码'; return; }
-    const hash = await sha256(pw);
-    const expected = await sha256(PASSWORD);
+    const hash = sha256(pw);
+    const expected = sha256(PASSWORD);
     if (hash === expected) {
       localStorage.setItem(LOCK_CACHE_KEY, hash);
       overlay.classList.add('hidden');
@@ -2169,23 +2368,38 @@ $("#searchInput").oninput = e => {
 };
 
 // ===================== Todo =====================
+function fmtTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function renderTodo() {
   const list = $("#todoList");
   list.innerHTML = "";
-  appData.todos.forEach((item, idx) => {
+  // Only show incomplete todos
+  appData.todos.filter(t => !t.done).forEach((item, idx) => {
+    // Find the real index in appData.todos for data-idx
+    const realIdx = appData.todos.indexOf(item);
     const div = document.createElement("div");
     div.className = "todo-item";
+    // Show created time on hover via title
+    const title = item.created_at ? fmtTime(item.created_at) : '';
     div.innerHTML = `
-      <input type="checkbox" data-idx="${idx}" ${item.done ? "checked" : ""} class="todo-check">
-      <span class="todo-text ${item.done ? "done" : ""}">${item.text}</span>
-      <button data-idx="${idx}" class="todo-del">
+      <input type="checkbox" data-idx="${realIdx}" ${item.done ? "checked" : ""} class="todo-check">
+      <span class="todo-text" title="${title}">${item.text}</span>
+      <button data-idx="${realIdx}" class="todo-del">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
     `;
     div.querySelector(".todo-check").onchange = function() {
-      appData.todos[this.dataset.idx].done = this.checked;
+      const t = appData.todos[this.dataset.idx];
+      t.done = this.checked;
+      if (t.done && !t.completed_at) t.completed_at = new Date().toISOString();
+      else if (!t.done) t.completed_at = null;
       saveData(appData); renderTodo();
     };
     div.querySelector(".todo-del").onclick = function() {
@@ -2199,17 +2413,163 @@ function renderTodo() {
 $("#addTodo").onclick = () => {
   const text = $("#todoInput").value.trim();
   if (!text) return;
-  appData.todos.push({ text, done: false });
+  const maxId = appData.todos.length ? Math.max(...appData.todos.map(t => t.id || 0)) : 0;
+  appData.todos.push({ id: maxId + 1, text, done: false, created_at: new Date().toISOString(), completed_at: null });
   $("#todoInput").value = "";
   saveData(appData); renderTodo();
 };
 
 $("#todoInput").onkeydown = e => { if (e.key === "Enter") $("#addTodo").click(); };
-$("#clearDone").onclick = () => {
-  appData.todos = appData.todos.filter(t => !t.done);
-  saveData(appData); renderTodo();
-};
 $("#todoToggleBtn").onclick = () => $("#sidePanel").classList.toggle("hidden");
+
+// ===================== Todo History =====================
+let _historyAllItems = [];
+let _historyPage = 1;
+const HISTORY_PAGE_SIZE = 10;
+
+function renderHistory() {
+  const body = $("#historyBody");
+  const pagination = $("#historyPagination");
+  body.innerHTML = "";
+
+  // Filter by search keyword
+  const keyword = ($("#historySearch").value || "").trim().toLowerCase();
+  let filtered = _historyAllItems;
+  if (keyword) {
+    filtered = _historyAllItems.filter(item => item.text.toLowerCase().includes(keyword));
+  }
+
+  if (!filtered || filtered.length === 0) {
+    body.innerHTML = '<tr><td colspan="5" class="history-empty">暂无已完成待办</td></tr>';
+    return;
+  }
+
+  // Paginate
+  const totalPages = Math.ceil(filtered.length / HISTORY_PAGE_SIZE);
+  if (_historyPage > totalPages) _historyPage = totalPages;
+  const start = (_historyPage - 1) * HISTORY_PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + HISTORY_PAGE_SIZE);
+
+  pageItems.forEach(item => {
+    const tr = document.createElement("tr");
+    tr.dataset.todoId = item.id;
+    tr.innerHTML = `
+      <td><input type="checkbox" class="history-check" data-id="${item.id}"></td>
+      <td>${item.text}</td>
+      <td class="td-time">${item.completed_at ? fmtTime(item.completed_at) : '-'}</td>
+      <td class="td-time">${item.created_at ? fmtTime(item.created_at) : '-'}</td>
+      <td><button class="history-del-btn" data-id="${item.id}" title="删除">✕</button></td>
+    `;
+    tr.querySelector(".history-del-btn").onclick = async function() {
+      const id = Number(this.dataset.id);
+      if (!confirm("确定删除这条待办？")) return;
+      await fetch('/api/todos', {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ ids: [id] })
+      });
+      await reloadAppData();
+      await loadHistory($("#historyFrom").value, $("#historyTo").value);
+    };
+    body.appendChild(tr);
+  });
+
+  // Pagination controls
+  pagination.innerHTML = `<button id="historyBatchDelBtn" class="btn-ghost" style="color:var(--error);font-size:0.75rem;border:1px solid var(--border);padding:4px 12px;border-radius:var(--radius);cursor:pointer;">删除选中</button>`;
+  if (totalPages > 1) {
+    const prevBtn = document.createElement("button");
+    prevBtn.textContent = "上一页";
+    prevBtn.disabled = _historyPage <= 1;
+    prevBtn.onclick = () => { _historyPage--; renderHistory(); };
+    pagination.appendChild(prevBtn);
+
+    const span = document.createElement("span");
+    span.textContent = `${_historyPage} / ${totalPages}`;
+    pagination.appendChild(span);
+
+    const nextBtn = document.createElement("button");
+    nextBtn.textContent = "下一页";
+    nextBtn.disabled = _historyPage >= totalPages;
+    nextBtn.onclick = () => { _historyPage++; renderHistory(); };
+    pagination.appendChild(nextBtn);
+  }
+
+  // Batch delete
+  $("#historyBatchDelBtn").onclick = async () => {
+    const checks = document.querySelectorAll(".history-check:checked");
+    if (checks.length === 0) return alert("请先选择要删除的待办");
+    if (!confirm(`确定删除选中的 ${checks.length} 条待办？`)) return;
+    const ids = Array.from(checks).map(c => Number(c.dataset.id));
+    await fetch('/api/todos', {
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ ids })
+    });
+    await reloadAppData();
+    await loadHistory($("#historyFrom").value, $("#historyTo").value);
+  };
+
+  // Select all
+  const selAll = $("#historySelectAll");
+  if (selAll) {
+    selAll.onclick = () => {
+      document.querySelectorAll(".history-check").forEach(c => c.checked = selAll.checked);
+    };
+  }
+}
+
+async function loadHistory(from, to) {
+  const url = `/api/todos/history?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  try {
+    const res = await fetch(url);
+    _historyAllItems = await res.json();
+    _historyPage = 1;
+    renderHistory();
+  } catch(e) {
+    $("#historyBody").innerHTML = '<tr><td colspan="5" class="history-empty">查询失败</td></tr>';
+  }
+}
+
+async function reloadAppData() {
+  try {
+    const res = await fetch('/api/data');
+    appData = await res.json();
+    renderTodo();
+    renderGroups();
+  } catch(e) {
+    console.error('reloadAppData error:', e);
+  }
+}
+
+$("#historyBtn").onclick = () => {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const today = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const weekAgo = new Date(now);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const from = `${weekAgo.getFullYear()}-${pad(weekAgo.getMonth()+1)}-${pad(weekAgo.getDate())}`;
+  $("#historyFrom").value = from;
+  $("#historyTo").value = today;
+  $("#historySearch").value = "";
+  $("#historyModal").classList.add("active");
+  loadHistory(from, today);
+};
+
+$("#historyQueryBtn").onclick = () => {
+  const from = $("#historyFrom").value;
+  const to = $("#historyTo").value;
+  _historyPage = 1;
+  loadHistory(from, to);
+};
+
+$("#historySearch").oninput = () => {
+  _historyPage = 1;
+  renderHistory();
+};
+
+$("#historyCloseBtn").onclick = () => {
+  $("#historyModal").classList.remove("active");
+};
 
 // ===================== Data Toggle =====================
 $("#dataToggle").onclick = () => {

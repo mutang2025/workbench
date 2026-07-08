@@ -19,25 +19,26 @@ services:
     # 容器名称
     container_name: workbench
     # 端口映射：宿主机端口:容器端口
-    # 如需改用其他端口（如 8080），修改左侧即可：8080:3110
     ports:
       - "3110:3110"
-    # 数据持久化：使用 Docker named volume，重建容器不丢失
-    volumes:
-      - workbench_data:/app/data
-    # 环境变量（可覆盖默认端口）
+    # 环境变量
     environment:
       - PORT=3110
       - NODE_ENV=production
+      - DATABASE_URL=postgresql://lgc2025:lgc2025_pass_pg@postgresql:5432/workbench
     # 自动重启策略
     restart: unless-stopped
-    # 健康检查（与 Dockerfile 中一致，compose 层面可覆盖）
+    # 健康检查
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3110/api/data"]
       interval: 30s
       timeout: 3s
       retries: 3
       start_period: 5s
+    # 连接到 postgresql 所在网络
+    networks:
+      - 1panel-network
 
-volumes:
-  workbench_data:
+networks:
+  1panel-network:
+    external: true

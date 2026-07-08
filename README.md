@@ -1,6 +1,6 @@
 # 个人工作台 · Personal Workbench
 
-一个采用 Apple 设计风格的个人工作台 Web 应用，集网址导航、待办管理、书签导入、背景定制于一体。前端为单文件 HTML，后端为零依赖的 Node.js 原生 HTTP 服务，数据持久化采用「服务端 JSON 文件 + 浏览器 localStorage」双层存储。
+一个采用 Apple 设计风格的个人工作台 Web 应用，集网址导航、待办管理、书签导入、背景定制于一体。前端为单文件 HTML，后端为零依赖的 Node.js 原生 HTTP 服务，数据持久化采用 **PostgreSQL** 数据库。
 
 ---
 
@@ -26,8 +26,7 @@
 workbench/
 ├── server.js              # Node.js 后端服务（零依赖，仅用内置模块）
 ├── workbench.html         # 前端单页应用（HTML + CSS + JS 合一）
-├── data/                  # 数据目录（容器内运行时生成，通过 named volume 持久化）
-│   └── data.json          # 数据持久化文件
+├── favicon.ico            # 站点图标（多尺寸 ICO）
 ├── Dockerfile             # Docker 镜像构建文件
 ├── docker-compose.yml     # Docker Compose 一键部署配置
 └── .dockerignore          # Docker 构建忽略列表
@@ -35,9 +34,9 @@ workbench/
 
 | 文件 | 说明 |
 | --- | --- |
-| `server.js` | 原生 `http` 模块搭建的服务，提供静态文件托管与数据读写 REST API |
+| `server.js` | 原生 `http` + `pg` 模块搭建的服务，提供静态文件托管与数据读写 REST API |
 | `workbench.html` | 包含完整 UI、样式与交互逻辑的前端单页应用 |
-| `data/data.json` | 服务端数据存储文件，通过 Docker named volume 持久化 |
+| `favicon.ico` | 多尺寸 favicon 图标（16/32/48/64/128/256） |
 
 ---
 
@@ -48,25 +47,29 @@ workbench/
 | 🔒 密码保护 | 首次访问需输入密码，SHA-256 加密缓存到浏览器 localStorage，后续免验证 |
 | 🗂️ 站点导航 | 按分组展示站点卡片，支持拖拽排序、跨组拖动、增删改、折叠展开 |
 | 🔍 站点搜索 | 按站点名称或网址实时过滤 |
-| ✅ 待办事项 | 新增、勾选完成、删除、一键清空已完成 |
+| ✅ 待办事项 | 新增、勾选完成、删除；已完成待办可查看历史，支持表格展示、分页、搜索、批量删除 |
 | 🕐 实时时钟 | 每秒刷新的时分秒 + 日期星期 |
 | 🎨 背景定制 | 纯色 / 渐变 / 网络图片 / 本地上传图片 |
 | 🌗 主题切换 | 亮色 / 暗色主题，Apple 风格设计系统 |
 | 📑 书签导入 | 解析浏览器导出的 HTML 书签文件，作为数据源供挑选 |
 | 💾 数据管理 | JSON 备份导出 / 导入 / 一键清空 |
-| 🔄 数据持久化 | 服务端优先，本地 localStorage 兜底，离线可用 |
+| 🔄 数据持久化 | PostgreSQL 数据库持久化，容器重建不丢失 |
 
 ---
 
 ## 技术栈
 
 **后端**
-- Node.js 原生 `http` / `fs` / `path` 模块（**零第三方依赖**）
+- Node.js 原生 `http` / `path` 模块 + `pg` (PostgreSQL 客户端)
+- 零其他第三方依赖
 
 **前端**
 - 原生 HTML / CSS / JavaScript（无框架）
 - [SortableJS](https://sortablejs.github.io/Sortable/)（CDN 引入，拖拽排序）
 - [DM Sans](https://fonts.google.com/specimen/DM+Sans) 字体（Google Fonts CDN）
+
+**数据库**
+- PostgreSQL（通过 Docker Compose 部署）
 
 ---
 
@@ -74,6 +77,7 @@ workbench/
 
 ### 环境要求
 - Node.js（建议 v14+）
+- PostgreSQL 数据库
 
 ### 启动服务
 
@@ -89,17 +93,15 @@ node server.js
 
 ### 访问应用
 
-浏览器打开 `http://localhost:3000`。
+浏览器打开 `http://localhost:3110`。
 
 ---
 
 ## Docker 部署
 
-项目前后端一体化，已支持打包为单个 Docker 镜像部署。提供两种方式：Docker Compose（推荐）和原生 Docker 命令。
+项目前后端一体化，已支持打包为单个 Docker 镜像部署。PostgreSQL 通过 Docker Compose 统一编排。
 
-### 方式一：Docker Compose（推荐）
-
-一键构建并启动，数据通过 Docker named volume 持久化，重建容器不丢失：
+### Docker Compose（推荐）
 
 ```bash
 # 构建镜像并后台启动
@@ -116,31 +118,6 @@ docker compose down
 
 **自定义端口**：修改 `docker-compose.yml` 中 `ports` 的左侧端口即可，例如改为 `8080:3110` 后访问 `http://localhost:8080`。
 
-### 方式二：原生 Docker 命令
-
-```bash
-# 1. 构建镜像
-docker build -t personal-workbench:latest .
-
-# 2. 创建 named volume
-docker volume create workbench_data
-
-# 3. 运行容器（使用 named volume 持久化数据）
-docker run -d \
-  --name workbench \
-  -p 3110:3110 \
-  -v workbench_data:/app/data \
-  --restart unless-stopped \
-  personal-workbench:latest
-
-# 查看日志
-docker logs -f workbench
-
-# 停止 / 删除
-docker stop workbench
-docker rm workbench
-```
-
 ### Docker 镜像特性
 
 | 特性 | 说明 |
@@ -148,51 +125,24 @@ docker rm workbench
 | 基础镜像 | `node:20-alpine`（轻量，约 50MB） |
 | 非 root 运行 | 使用 `appuser` 用户运行，提升安全性 |
 | 健康检查 | 内置 `HEALTHCHECK`，每 30 秒检测 `/api/data` |
-| 数据持久化 | 通过 Docker named volume 持久化，重建容器数据不丢失 |
+| 数据持久化 | 接入 PostgreSQL 数据库，容器重建数据不丢失 |
 | 自动重启 | `restart: unless-stopped`，异常退出自动拉起 |
 | 零依赖 | 无需 `npm install`，镜像极简 |
 | 密码保护 | 首次访问需输入密码，SHA-256 加密缓存到浏览器 localStorage |
-
-### 数据持久化说明
-
-数据通过 Docker named volume `workbench_workbench_data`（Compose 自动创建）持久化到 `/app/data/data.json`，容器重建、删除后重新创建，数据依然保留。
-
-如需手动备份数据：
-
-```bash
-# 导出数据
-docker run --rm -v workbench_workbench_data:/data alpine cat /data/data.json > backup.json
-
-# 恢复数据
-docker run --rm -i -v workbench_workbench_data:/data alpine sh -c 'cat > /data/data.json' < backup.json
-```
-
-### 推送到镜像仓库（可选）
-
-```bash
-# 打标签（替换为你的仓库地址）
-docker tag personal-workbench:latest your-registry.com/workbench:latest
-
-# 推送
-docker push your-registry.com/workbench:latest
-
-# 在服务器上拉取并运行
-docker pull your-registry.com/workbench:latest
-docker run -d --name workbench -p 80:3110 -v workbench_data:/app/data your-registry.com/workbench:latest
-```
+| favicon | 内置多尺寸 ICO 图标 |
 
 ---
 
 ## 后端服务（server.js）
 
-基于 Node.js 原生 `http` 模块实现，无任何第三方依赖。
+基于 Node.js 原生 `http` 模块 + `pg` 实现，无其他第三方依赖。
 
 ### 核心配置
 
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
 | `PORT` | `3110`（可由环境变量 `PORT` 覆盖） | 服务监听端口 |
-| `DATA_FILE` | `path.join(__dirname, 'data', 'data.json')` | 数据存储文件路径（容器内） |
+| `DATABASE_URL` | `postgresql://lgc2025:***@postgresql:5432/workbench` | PostgreSQL 连接字符串 |
 
 ### MIME 类型支持
 
@@ -204,22 +154,25 @@ docker run -d --name workbench -p 80:3110 -v workbench_data:/app/data your-regis
 
 | 方法 | 路径 | 功能 |
 | --- | --- | --- |
-| `GET` | `/api/data` | 读取数据，返回 `data.json` 内容；文件不存在或为空时返回 `{}` |
-| `PUT` | `/api/data` | 接收 JSON body 写入 `data.json`；解析失败返回 400，写入失败返回 500 |
+| `GET` | `/api/data` | 读取数据，返回所有站点、待办、书签等 |
+| `PUT` | `/api/data` | 接收 JSON body 写入数据库 |
+| `GET` | `/api/todos/history?from=&to=` | 查询已完成待办历史，按完成时间范围筛选 |
+| `DELETE` | `/api/todos` | 删除指定 ID 的待办（支持批量），body: `{ "ids": [1, 2] }` |
 | `OPTIONS` | `*` | CORS 预检请求，返回 204 |
-| `GET` | `/` | 重定向到 `/工作台.html` |
+| `GET` | `/` | 返回 `workbench.html` |
+| `GET` | `/favicon.ico` | 返回站点图标 |
 | `GET` | `/<静态文件>` | 托管静态资源 |
 
 ### 安全机制
 
-- **CORS 支持**：允许所有来源（`*`），支持 `GET / PUT / OPTIONS` 方法。
+- **CORS 支持**：允许所有来源（`*`），支持 `GET / PUT / DELETE / OPTIONS` 方法。
 - **目录逃逸防护**：通过 `filePath.startsWith(__dirname)` 校验，阻止通过路径穿越访问项目目录外的文件。
 
 ### 请求头设置
 
 ```
 Access-Control-Allow-Origin: *
-Access-Control-Allow-Methods: GET, PUT, OPTIONS
+Access-Control-Allow-Methods: GET, PUT, DELETE, OPTIONS
 Access-Control-Allow-Headers: Content-Type
 ```
 
@@ -254,6 +207,7 @@ app-container
 | `siteModal` | 新增 / 编辑站点，支持从书签数据源挑选 |
 | `bgModal` | 背景设置（纯色 / 渐变预设 / 图片 URL / 本地上传） |
 | `bookmarkModal` | 书签导入预览与选择 |
+| `historyModal` | 已完成待办历史（表格、分页、搜索、批量删除） |
 
 ### 浮动按钮
 
@@ -263,7 +217,7 @@ app-container
 
 ## 数据结构
 
-前端 `DEFAULTS` 定义了默认数据结构，所有数据以单一 JSON 对象持久化：
+前端 `DEFAULTS` 定义了默认数据结构：
 
 ```javascript
 {
@@ -280,8 +234,11 @@ app-container
   groups: ["开发", "办公", "生活"],   // 分组名称数组（顺序即展示顺序）
   todos: [
     {
+      id: Number,        // 待办唯一 ID（自增）
       text: String,      // 待办内容
-      done: Boolean      // 是否完成
+      done: Boolean,     // 是否完成
+      created_at: String,// 创建时间（ISO 8601）
+      completed_at: String|null // 完成时间（ISO 8601）
     }
   ],
   bookmarkSource: [
@@ -328,8 +285,6 @@ function mergeData(raw) {
 }
 ```
 
-文件不存在或为空时返回 `{}`。
-
 ### PUT /api/data
 
 保存数据。
@@ -339,28 +294,31 @@ function mergeData(raw) {
 **响应：**
 - 成功：`{ "ok": true }`
 - JSON 解析失败：`400 { "error": "无效的 JSON" }`
-- 写入失败：`500 { "error": "写入失败" }`
+- 写入失败：`500 { "error": "保存数据失败" }`
+
+### GET /api/todos/history?from=&to=
+
+查询已完成待办历史，按完成时间范围筛选。
+
+**参数：**
+- `from`：开始日期（YYYY-MM-DD），默认 `1970-01-01`
+- `to`：结束日期（YYYY-MM-DD），默认 `2099-12-31`
+
+**响应：** 已完成待办数组，按完成时间倒序
+
+### DELETE /api/todos
+
+删除指定 ID 的待办，支持批量删除。
+
+**请求体：** `{ "ids": [1, 2, 3] }`
 
 ---
 
 ## 功能详解
 
-### 数据持久化（双层存储）
+### 数据持久化（PostgreSQL）
 
-采用**服务端优先、本地兜底**的策略，保证离线可用：
-
-```
-读取 loadData():
-  1. 优先 fetch GET /api/data
-     → 成功且有数据：同步写入 localStorage 后返回
-  2. 服务端不可达：回退读取 localStorage
-  3. 本地也无数据：返回 DEFAULTS 默认值
-
-保存 saveData(data):
-  1. 先写入 localStorage（即时落地）
-  2. 再 fetch PUT /api/data
-     → 失败仅 console.warn，不影响本地保存
-```
+采用 **PostgreSQL** 数据库持久化，数据表包括 `sites`、`todos`、`bookmark_source`、`app_groups`，容器重建、删除后重新创建，数据依然保留。
 
 ### 站点卡片
 
@@ -368,6 +326,14 @@ function mergeData(raw) {
 - **拖拽排序**：基于 SortableJS，支持组内排序与**跨组拖动**（自动更新 `group` 与 `sort` 字段）。
 - **折叠展开**：单组站点超过 25 个时自动折叠，显示「展开 (N 项)」按钮。
 - **右键编辑**：在站点卡片上右键可直接打开编辑弹窗。
+
+### 待办清单
+
+- **主页列表**：仅展示未完成待办，创建时间默认隐藏，鼠标悬停显示。
+- **历史记录**：点击「历史」按钮打开弹窗，表格形式展示已完成待办（内容、完成时间、创建时间）。
+- **分页**：每页默认 10 条，支持翻页。
+- **搜索**：按内容实时过滤。
+- **删除**：单条删除（行内 ✕ 按钮）和批量选择删除（勾选后点「删除选中」）。
 
 ### 背景设置
 
@@ -397,7 +363,8 @@ function mergeData(raw) {
 - **CORS 完全开放**：`Access-Control-Allow-Origin: *`，适合本地或内网使用，不建议直接暴露到公网。
 - **密码保护**：默认密码 `lgc123`，通过 SHA-256 加密缓存到浏览器 localStorage，首次访问需输入密码。如需修改密码，编辑 `workbench.html` 中的 `PASSWORD` 常量。
 - **localStorage 同步**：每次读取服务端数据会同步覆盖本地缓存，多设备数据不会自动合并，以最后一次写入为准。
-- **图片背景 Base64**：本地上传的背景图片以 Base64 编码存入数据，大图会显著增大 `data.json` 体积。
+- **图片背景 Base64**：本地上传的背景图片以 Base64 编码存入数据，大图会显著增大数据体积。
+- **数据备份**：数据存储在 PostgreSQL 中，如需备份请使用数据库导出工具（如 `pg_dump`）。
 
 ---
 
@@ -407,5 +374,4 @@ function mergeData(raw) {
 
 - **新增站点字段**：在 `DEFAULTS.sites` 与编辑弹窗中增加字段即可
 - **新增分组逻辑**：分组存储在 `groups` 数组，顺序即展示顺序
-- **接入数据库**：替换 `server.js` 中 `fs.readFile/writeFile` 为数据库读写即可，API 契约保持不变
 - **自定义主题**：修改 `:root` 与 `.dark` 中的 CSS 变量即可全局换肤

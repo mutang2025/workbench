@@ -1,0 +1,9 @@
+{
+  "name": "personal-workbench",
+  "version": "2.0.0",
+  "private": true,
+  "description": "个人工作台 - PostgreSQL 版",
+  "dependencies": {
+    "pg": "^8.13.0"
+  }
+}

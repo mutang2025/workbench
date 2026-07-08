@@ -1,0 +1,17 @@
+# Docker
+docker-compose.override.yml
+
+# Temp / migration files
+health_data.json
+migrate.sql
+
+# Node modules (if any)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
