@@ -2077,23 +2077,20 @@ async function loadData() {
   return { ...DEFAULTS };
 }
 
-// Save: write to both server and localStorage
+// Save: write to localStorage immediately, sync to server in background
 async function saveData(data) {
   appData = data;
   localStorage.setItem(LS_KEY, JSON.stringify(data));
-  try {
-    const res = await fetch('/api/data', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      console.warn('服务端写入失败，数据已保存在本地:', res.status, errBody);
-    }
-  } catch(e) {
-    console.warn('服务端不可达，数据已保存在本地:', e.message);
-  }
+  // Fire server sync in background — don't block the UI
+  fetch('/api/data', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(res => {
+    if (!res.ok) console.warn('服务端写入失败:', res.status);
+  }).catch(e => {
+    console.warn('服务端不可达:', e.message);
+  });
 }
 
 // ===================== DOM Cache =====================
