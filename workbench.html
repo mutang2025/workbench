@@ -2060,20 +2060,30 @@ function mergeData(raw) {
 
 // Load: try server first, fallback to localStorage, then defaults
 async function loadData() {
+  // Load from localStorage first for config values (bgConfig, theme)
+  let localData = null;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) localData = JSON.parse(raw);
+  } catch {}
+
   try {
     const res = await fetch('/api/data');
     const data = await res.json();
     if (data && Object.keys(data).length) {
-      // Sync to localStorage for offline fallback
-      localStorage.setItem(LS_KEY, JSON.stringify(data));
-      return mergeData(data);
+      // Merge: server is source of truth for sites/todos/bookmarks/groups,
+      // but preserve local bgConfig and theme (may not have synced yet)
+      const merged = {
+        ...data,
+        bgConfig: localData?.bgConfig || data.bgConfig || DEFAULTS.bgConfig,
+        theme: localData?.theme || data.theme || DEFAULTS.theme,
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(merged));
+      return mergeData(merged);
     }
   } catch {}
   // Fallback: localStorage
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) return mergeData(JSON.parse(raw));
-  } catch {}
+  if (localData) return mergeData(localData);
   return { ...DEFAULTS };
 }
 
