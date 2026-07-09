@@ -1161,8 +1161,49 @@
       font-size: 1.125rem;
       font-weight: 600;
       color: var(--foreground);
-      margin-bottom: calc(var(--spacing) * 5);
       letter-spacing: -0.01em;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: calc(var(--spacing) * 5);
+    }
+
+    .modal-close-btn {
+      width: 32px; height: 32px;
+      border: none; border-radius: 50%;
+      background: transparent;
+      color: var(--foreground-tertiary);
+      font-size: 22px; line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.18s ease, color 0.18s ease;
+      flex-shrink: 0;
+    }
+    .modal-close-btn:hover {
+      background: var(--background-tertiary);
+      color: var(--foreground);
+    }
+
+    /* Save button loading spinner */
+    .btn-primary.loading {
+      position: relative;
+      color: transparent !important;
+      pointer-events: none;
+    }
+    .btn-primary.loading::after {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: btn-spin 0.6s linear infinite;
+    }
+    @keyframes btn-spin {
+      to { transform: rotate(360deg); }
     }
 
     .form-group {
@@ -1732,7 +1773,10 @@
   <!-- Modal: Add / Edit Site -->
   <div id="siteModal" class="modal-overlay">
     <div class="modal-content">
-      <h2>新增站点</h2>
+      <div class="modal-header">
+        <h2 style="margin-bottom:0;">新增站点</h2>
+        <button class="modal-close-btn" id="siteModalClose">×</button>
+      </div>
       <div class="form-group">
         <label>分组</label>
         <select id="siteGroup"></select>
@@ -2322,7 +2366,7 @@ $("#pickBookmarkSearch").oninput = e => {
 
 $("#addSiteBtn").onclick = () => openModal();
 $("#modalCancel").onclick = closeModal;
-$("#siteModal").onclick = e => { if (e.target === $("#siteModal")) closeModal(); };
+$("#siteModalClose").onclick = closeModal;
 
 // ===================== Icon Upload =====================
 $("#siteIconUpload").onchange = e => {
@@ -2336,12 +2380,14 @@ $("#siteIconUpload").onchange = e => {
 };
 
 $("#modalSave").onclick = async () => {
+  const btn = $("#modalSave");
+  btn.classList.add("loading");
   const id = $("#editId").value;
   const group = $("#siteGroup").value.trim();
   const name = $("#siteName").value.trim();
   const url = $("#siteUrl").value.trim();
   const icon = $("#siteIcon").value.trim();
-  if (!name || !url || !group) return alert("名称、网址、分组不能为空");
+  if (!name || !url || !group) { btn.classList.remove("loading"); return alert("名称、网址、分组不能为空"); }
 
   if (id) {
     const idx = appData.sites.findIndex(s => s.id == id);
@@ -2354,6 +2400,7 @@ $("#modalSave").onclick = async () => {
   await saveData(appData);
   renderGroups();
   closeModal();
+  btn.classList.remove("loading");
 };
 
 // ===================== Search =====================
