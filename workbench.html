@@ -2164,6 +2164,7 @@ function renderGroups() {
             展开 (${groupSites.length - 25} 项)
           </button>` : ''}
           <button class="text-action add-site" data-group="${groupName}">+ 添加站点</button>
+          <button class="text-action rename-group" data-group="${groupName}">重命名</button>
           <button class="text-action del-group" data-group="${groupName}">删除分组</button>
         </div>
       </div>
@@ -2270,6 +2271,18 @@ function renderGroups() {
         appData.sites = appData.sites.filter(s => s.group !== groupName);
         saveData(appData);
         renderGroups();
+      }
+    };
+    section.querySelector(".rename-group").onclick = () => {
+      const newName = prompt("输入新的分组名称", groupName);
+      if (newName && newName.trim() && newName.trim() !== groupName && !appData.groups.includes(newName.trim())) {
+        const oldName = groupName;
+        appData.groups = appData.groups.map(g => g === oldName ? newName.trim() : g);
+        appData.sites.forEach(s => { if (s.group === oldName) s.group = newName.trim(); });
+        saveData(appData);
+        renderGroups();
+      } else if (newName && appData.groups.includes(newName.trim())) {
+        alert("分组名称已存在");
       }
     };
 
