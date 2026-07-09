@@ -3,9 +3,24 @@ const path = require('path');
 const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 3110;
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://lgc2025:lgc2025_pass_pg@postgresql:5432/workbench';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://lgc2025:***@postgresql:5432/workbench';
 
 const pool = new Pool({ connectionString: DATABASE_URL });
+
+// Auto-migrate: ensure app_config table exists
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS app_config (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+    console.log('[migrate] app_config table ready');
+  } catch (e) {
+    console.error('[migrate] error:', e.message);
+  }
+})();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -42,11 +57,18 @@ async function loadData() {
   const { rows: todos } = await pool.query('SELECT id, text, done, created_at, completed_at FROM todos ORDER BY id ASC');
   const { rows: bookmarks } = await pool.query('SELECT name, url, icon FROM bookmark_source ORDER BY id ASC');
   const { rows: groups } = await pool.query('SELECT name FROM app_groups ORDER BY id ASC');
+  const { rows: configs } = await pool.query('SELECT key, value FROM app_config');
+  const cfg = {};
+  for (const c of configs) {
+    try { cfg[c.key] = JSON.parse(c.value); } catch { cfg[c.key] = c.value; }
+  }
   return {
     sites,
     todos,
     bookmarkSource: bookmarks,
     groups: groups.map(r => r.name),
+    theme: cfg.theme || 'light',
+    bgConfig: cfg.bgConfig || { type: 'gradient', value: 'linear-gradient(135deg,#e0eafc,#cfdef3)' },
   };
 }
 
@@ -55,34 +77,61 @@ async function saveData(data) {
   try {
     await client.query('BEGIN');
 
-    // Save groups
+    // Batch upsert groups — DELETE + multi-row INSERT
     await client.query('DELETE FROM app_groups');
-    for (const g of data.groups || []) {
-      await client.query('INSERT INTO app_groups (name) VALUES ($1)', [g]);
+    if (data.groups && data.groups.length) {
+      const vals = data.groups.map((_, i) => `($${i + 1})`).join(',');
+      await client.query(`INSERT INTO app_groups (name) VALUES ${vals}`, data.groups);
     }
 
-    // Save sites
+    // Batch upsert sites
     await client.query('DELETE FROM sites');
-    for (const s of data.sites || []) {
-      await client.query(
-        'INSERT INTO sites (id, group_name, name, url, icon, sort) VALUES ($1, $2, $3, $4, $5, $6)',
-        [s.id, s.group, s.name, s.url, s.icon || '', s.sort ?? 0]
-      );
+    if (data.sites && data.sites.length) {
+      const cols = ['id', 'group_name', 'name', 'url', 'icon', 'sort'];
+      const rows = data.sites.map(s => [s.id, s.group, s.name, s.url, s.icon || '', s.sort ?? 0]);
+      const vals = rows.map((_, i) => {
+        const base = i * cols.length + 1;
+        return `($${base},$${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5})`;
+      }).join(',');
+      await client.query(`INSERT INTO sites (id, group_name, name, url, icon, sort) VALUES ${vals}`, rows.flat());
     }
 
-    // Save todos — preserve id, created_at, update completed_at on completion
+    // Batch upsert todos
     await client.query('DELETE FROM todos');
-    for (const t of data.todos || []) {
-      await client.query(
-        'INSERT INTO todos (id, text, done, created_at, completed_at) VALUES ($1, $2, $3, $4, $5)',
-        [t.id, t.text, t.done || false, t.created_at || new Date().toISOString(), t.completed_at || null]
-      );
+    if (data.todos && data.todos.length) {
+      const cols = ['id', 'text', 'done', 'created_at', 'completed_at'];
+      const rows = data.todos.map(t => [t.id, t.text, t.done || false, t.created_at || new Date().toISOString(), t.completed_at || null]);
+      const vals = rows.map((_, i) => {
+        const base = i * cols.length + 1;
+        return `($${base},$${base + 1},$${base + 2},$${base + 3},$${base + 4})`;
+      }).join(',');
+      await client.query(`INSERT INTO todos (id, text, done, created_at, completed_at) VALUES ${vals}`, rows.flat());
     }
 
-    // Save bookmarks
+    // Batch upsert bookmarks
     await client.query('DELETE FROM bookmark_source');
-    for (const b of data.bookmarkSource || []) {
-      await client.query('INSERT INTO bookmark_source (name, url, icon) VALUES ($1, $2, $3)', [b.name, b.url, b.icon || '']);
+    if (data.bookmarkSource && data.bookmarkSource.length) {
+      const cols = ['name', 'url', 'icon'];
+      const rows = data.bookmarkSource.map(b => [b.name, b.url, b.icon || '']);
+      const vals = rows.map((_, i) => {
+        const base = i * cols.length + 1;
+        return `($${base},$${base + 1},$${base + 2})`;
+      }).join(',');
+      await client.query(`INSERT INTO bookmark_source (name, url, icon) VALUES ${vals}`, rows.flat());
+    }
+
+    // Save config (theme + bgConfig) via upsert
+    if (data.theme !== undefined) {
+      await client.query(
+        `INSERT INTO app_config (key, value) VALUES ('theme', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+        [JSON.stringify(data.theme)]
+      );
+    }
+    if (data.bgConfig !== undefined) {
+      await client.query(
+        `INSERT INTO app_config (key, value) VALUES ('bgConfig', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+        [JSON.stringify(data.bgConfig)]
+      );
     }
 
     await client.query('COMMIT');
