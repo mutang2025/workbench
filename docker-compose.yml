@@ -28,6 +28,9 @@ services:
       - DATABASE_URL=postgresql://lgc2025:lgc2025_pass_pg@postgresql:5432/workbench
     # 自动重启策略
     restart: unless-stopped
+    # 持久化上传的背景图
+    volumes:
+      - workbench_bg:/app/data/bg
     # 健康检查
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3110/api/data"]
@@ -42,3 +45,6 @@ services:
 networks:
   1panel-network:
     external: true
+
+volumes:
+  workbench_bg:

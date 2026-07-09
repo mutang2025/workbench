@@ -1,11 +1,17 @@
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 3110;
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://lgc2025:***@postgresql:5432/workbench';
 
 const pool = new Pool({ connectionString: DATABASE_URL });
+
+// Ensure bg image directory exists (under /app/data which has correct permissions)
+const BG_DIR = path.join(__dirname, 'data', 'bg');
+if (!fs.existsSync(BG_DIR)) fs.mkdirSync(BG_DIR, { recursive: true });
 
 // Auto-migrate: ensure app_config table exists
 (async () => {
@@ -253,10 +259,46 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // POST /api/bg-image — upload background image, save to disk, return URL
+  if (req.method === 'POST' && req.url === '/api/bg-image') {
+    const chunks = [];
+    let size = 0;
+    const MAX_BG = 10 * 1024 * 1024; // 10MB limit
+    req.on('data', chunk => {
+      size += chunk.length;
+      if (size > MAX_BG) {
+        res.writeHead(413);
+        res.end(JSON.stringify({ error: '图片太大，最大 10MB' }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      if (res.writableEnded) return;
+      const ext = req.headers['content-type']?.includes('png') ? '.png' : '.jpg';
+      const name = crypto.randomUUID() + ext;
+      const filePath = path.join(BG_DIR, name);
+      fs.writeFile(filePath, Buffer.concat(chunks), err => {
+        if (err) {
+          console.error('POST /api/bg-image write error:', err);
+          res.writeHead(500);
+          return res.end(JSON.stringify({ error: '保存图片失败' }));
+        }
+        res.end(JSON.stringify({ url: `/bg/${name}` }));
+      });
+    });
+    return;
+  }
+
   // Static files
+  let filePath;
   if (req.url === '/') filePath = '/workbench.html';
   else if (req.url === '/favicon.ico') filePath = '/favicon.ico';
-  else filePath = req.url;
+  else if (req.url.startsWith('/bg/')) {
+    serveFile(res, path.join(BG_DIR, req.url.replace('/bg/', '')));
+    return;
+  } else filePath = req.url;
   // Strip leading / to prevent path.join from treating it as absolute
   filePath = path.join(__dirname, filePath.replace(/^\//, ''));
 

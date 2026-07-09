@@ -2148,12 +2148,27 @@ $("#bgImageUrl").onkeydown = e => {
 $("#bgUploadFile").onchange = e => {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    appData.bgConfig = {type:"image", value:ev.target.result};
-    saveData(appData); applyBackground();
-  };
-  reader.readAsDataURL(file);
+  const label = e.target.closest(".upload-label");
+  const origText = label.textContent;
+  label.textContent = "上传中...";
+  label.style.pointerEvents = "none";
+  fetch('/api/bg-image', {
+    method: 'POST',
+    body: file,
+    headers: { 'Content-Type': file.type }
+  }).then(r => r.json()).then(data => {
+    if (data.url) {
+      appData.bgConfig = {type:"image", value:data.url};
+      saveData(appData); applyBackground();
+    }
+  }).catch(err => {
+    console.warn('上传背景图失败:', err);
+    alert('上传失败，请重试');
+  }).finally(() => {
+    label.textContent = origText;
+    label.style.pointerEvents = "";
+    e.target.value = "";
+  });
 };
 
 $("#resetBgBtn").onclick = () => {
